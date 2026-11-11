@@ -1,41 +1,70 @@
-# 60分钟技术分享讲解手册
+# 现场构建路线
 
-对象：计算机相关专业大学生。目标：掌握 Agent Loop、Tool Calling、Context、Event，并理解 SQLite 工具如何形成独立 Web Agent。
+## 目标
 
-| 时间 | 内容 | 幻灯片 |
-|---|---|---|
-| 0—5min | 从 LLM 到 Agent，南京数据问题 | 1—2 |
-| 5—15min | Pi AI / Agent Core / Coding Agent 的边界 | 3—4 |
-| 15—24min | Agent Loop，Tool Schema，白名单执行 | 5—6 |
-| 24—31min | Event → SSE，真实数据的口径 | 7—8 |
-| 31—37min | 讲解完整 Web 系统结构 | 9 |
-| 37—50min | 现场读代码：agent.mjs → tools.mjs → main.mjs | 10 |
-| 50—56min | /agent 三轮提问，观察图表及工具调用 | 11 |
-| 56—60min | 生产环境边界、提问 | 12 |
+从现成的南京 SQLite 数据出发，现场用 Pi Coding Agent 生成一个**独立运行**的 Web Agent：
 
-## 课前检查
+- 自然语言提问；
+- Pi Agent Core 自主选择工具；
+- SQLite 完成可信计算；
+- 浏览器实时显示回答、工具调用、图表。
 
-- npm install && npm test；Node.js 24+
-- 准备 .env，接通模型，确认 /api/status 返回 live
-- 用三个问题实际跑通 inspect_dataset、analyze_data、create_chart
-- PPT 左右键翻页、F 全屏、N 讲者备注
-- 如需展示真实天气，提前跑 npm run import:weather；不要依赖现场下载
-- 备用方案：删除 .env 中的 API Key 并重启，会显示“离线脚本演示（非 LLM）”，**不要把离线脚本说成真实 Agent**
+**操作路径：**运行 `npm start`，打开 `http://localhost:3000/slides`。第 5—9 页均有 **“查看／复制提示词”** 按钮，复制到 Pi Coding Agent 逐步执行。
 
-## 三轮示例
+## 60 分钟节奏
 
-第一轮：“南京2015—2024年 PM2.5 改善了多少？请用数据分析并画图。”
-第二轮：“同一段时间的优良天数比例怎样？再生成一个图。”
-第三轮：“2016年的数据呢？可以得出空气质量改善的直接原因吗？”
+| 时间 | 页面 | 操作 |
+| --- | --- | --- |
+| 0—2 分钟 | 1 | 展示目标 |
+| 2—5 分钟 | 2 | 看最终成品应该有什么 |
+| 5—10 分钟 | 3 | 讲清模型、Runtime、Tools、SQLite、UI |
+| 10—13 分钟 | 4 | 准备终端和模型密钥 |
+| 13—21 分钟 | 5 | 复制提示词 01：读取 SQLite |
+| 21—33 分钟 | 6 | 复制提示词 02：创建 Tools 与 Pi Agent |
+| 33—42 分钟 | 7 | 复制提示词 03：SSE 事件流 |
+| 42—54 分钟 | 8 | 复制提示词 04：Web UI |
+| 54—58 分钟 | 9 | 复制提示词 05：验证与修复 |
+| 58—60 分钟 | 10 | 用现场生成的 Agent 收尾 |
 
-学生应观察：2015年57、2024年28 μg/m³；2016年缺失；模型不能随意编造原因。
+## 课前准备
 
-## 看哪些关键代码
+运行环境：Node.js 24+、可调用的模型 API Key、Pi Coding Agent。安装 Pi Coding Agent（如果尚未安装）：
 
-1. server/agent.mjs：Agent、模型、工具数组、streamFn
-2. server/tools.mjs：Tool 定义四要素（name / description / parameters / execute）
-3. server/db.mjs：真实数据、来源与 SQL 白名单
-4. server/main.mjs：订阅 message_update、tool_execution_start/end，并转 SSE
-5. web/agent.js：根据事件绘图与记录工具时间线
+    npm install -g @earendil-works/pi-coding-agent
 
-可让学生设计第五个工具：对两项指标计算相关系数，并讨论为什么相关不能推出因果。此功能留作课后扩展，不要临时在课堂上写复杂分析。
+在仓库根目录：
+
+    npm install
+    cp .env.example .env
+    # 在 .env 中写入所选模型和 API Key
+    npm start
+
+打开 PPT：`http://localhost:3000/slides`。
+打开已经完成、可用于兜底的版本：`http://localhost:3000/agent`。
+
+另开一个终端在**仓库根目录**运行 `pi`。第 5 页开始，按顺序点击“查看／复制提示词”，交给 Pi Coding Agent 逐步实现。
+
+本次现场生成的代码只落在 `workshop/`。在第 7 步开启的演示服务使用**3001端口**，不与 PPT 和已有成品的**3000端口**冲突。第 10 页可以打开 `http://localhost:3001`。
+
+## 演示时只强调四件事
+
+1. **真正的 Agent Loop**：模型选择工具，Runtime 执行，而不是字符串匹配决定动作。
+2. **工具是边界**：SQL 查询由受限 API 构造，模型不能直接执行任意 SQL。
+3. **事件可观察**：工具调用及结果和模型文字通过 SSE 推给浏览器。
+4. **数据可信**：南京统计年鉴中缺失的2016年 PM2.5 不能让模型补造。
+
+## 现场风险预案
+
+- **模型不可用：**切回 `/agent` 演示已经跑通的功能；如果没有 Key，备用 UI 会明确显示“离线脚本演示（非 LLM）”，不能称其为真实 Agent Loop。
+- **时间不够：**停在已完成的步骤，演示备用版本。不要临时改演示数据或伪造工具事件。
+- **网络问题：**SQLite 内置南京数据可离线读取，能继续讲解数据库、工具白名单与 UI；真正的模型决策需要可访问模型服务。
+
+## 三个验收问题
+
+- “南京2015—2024年 PM2.5 变化了多少？请画图。”
+- “那空气质量优良天数比例呢？”
+- “2016年呢？可以解释改善的原因吗？”
+
+验收时核对：2015年 PM2.5 为57 μg/m³，2024年为28 μg/m³；**2016年没有对应记录**。数据来源链接应保留，不能用相关性推断因果原因。
+
+提示词全文以 `web/slides.js` 中的 `prompts` 为准，避免多处复制后发生版本偏差。
