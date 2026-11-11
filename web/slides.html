@@ -91,6 +91,40 @@ dialog::backdrop{background:#020914cc}
     <div class="card"><span class="eyeline">OUTPUT</span><strong>图表与结论</strong><p>数字有来源、可核对。</p></div>
   </div>
 </section>
+<section class="slide" data-title="ReAct 与 Pi" data-note="讲解时不把两者说成竞争替代：ReAct 是推理与行动交替的范式；Pi 是管理模型请求、Tool Call、结果、下一 Turn 和事件的具体运行时。原始 ReAct 示例常展示 Thought，但 Pi 不要求暴露模型隐藏推理。重点看下一页，如何把运行循环接到自己的 Web UI。">
+  <div class="kicker">REACT → AGENT LOOP</div>
+  <h2>ReAct 与 Pi：<span class="accent">区别在哪里？</span></h2>
+  <div class="two" style="align-items:stretch">
+    <div class="card">
+      <span class="eyeline">REACT / 范式</span>
+      <strong>推理与行动交替</strong>
+      <div class="mini-terminal" style="margin:19px 0">
+        <div class="mini-title"><span class="dot"></span>循环的思路</div>
+        <pre>Thought
+   ↓
+Action  →  Observation
+   ↑           │
+   └───────────┘</pre>
+      </div>
+      <p>描述模型如何借助环境反馈，继续解决问题。</p>
+    </div>
+    <div class="card">
+      <span class="eyeline">PI AGENT LOOP / 运行时</span>
+      <strong>把循环交给程序执行</strong>
+      <div class="mini-terminal" style="margin:19px 0">
+        <div class="mini-title"><span class="dot"></span>实际的工具调用</div>
+        <pre>LLM → text / tool_calls
+           ↓
+Runtime → execute tools
+           ↓
+Tool results → next turn</pre>
+      </div>
+      <p>管理请求、工具结果、上下文与运行事件。</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:26px">不是替代 ReAct，<span class="accent">而是让这种循环成为可集成的运行能力。</span></p>
+  <div class="subtle">参考：<a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct 论文 ↗</a>　·　<a href="https://pi.dev/docs/latest/how-pi-works" target="_blank" rel="noopener">Pi 官方 Agent Loop ↗</a></div>
+</section>
 <section class="slide" data-title="执行链" data-note="只讲这一条核心逻辑：模型决定是否调用工具，运行时执行，结果返回模型；Web UI 只消费事件和分析产物。">
   <div class="kicker">THE RUNTIME</div><h2>先看清楚<span class="accent">执行链</span></h2>
   <div class="pipeline">
@@ -183,7 +217,7 @@ http://localhost:3001
   <div class="actionline"><a class="cta" href="http://localhost:3001" target="_blank" rel="noopener">打开现场完成版 ↗</a><a class="ghost" href="/agent">打开备用成品 ↗</a></div>
 </section>
 </main>
-<div class="foot"><span><b id="page">01</b> / <span id="total">10</span>　<span id="section" class="muted">开始</span></span><div class="ctrl"><button id="notesBtn" type="button">备注 N</button><button id="fullBtn" type="button">全屏 F</button><button id="prev" type="button" aria-label="上一页">←</button><button id="next" type="button" aria-label="下一页">→</button></div></div>
+<div class="foot"><span><b id="page">01</b> / <span id="total">11</span>　<span id="section" class="muted">开始</span></span><div class="ctrl"><button id="notesBtn" type="button">备注 N</button><button id="fullBtn" type="button">全屏 F</button><button id="prev" type="button" aria-label="上一页">←</button><button id="next" type="button" aria-label="下一页">→</button></div></div>
 <div class="progress"><div id="progress"></div></div>
 <div class="notes" id="notes" hidden></div>
 </div>
