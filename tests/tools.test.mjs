@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createTools } from "../server/tools.mjs";
 
-test("all five tools have proper names and schema", () => {
+test("all seven tools have proper names and schema", () => {
   const tools=createTools();
-  assert.deepEqual(tools.map(t=>t.name),["list_datasets","inspect_dataset","analyze_data","create_chart","query_weather"]);
+  assert.deepEqual(tools.map(t=>t.name),["list_datasets","inspect_dataset","analyze_data","create_chart","query_weather","submit_plan","update_plan"]);
   assert.ok(tools.every(t=>t.parameters && typeof t.execute==="function"));
 });
 test("chart tool yields a chart artifact and provenance", async () => {

@@ -20,7 +20,21 @@ function compute(params) {
     groupBy: params.groupBy ?? "year", aggregation: params.aggregation ?? "avg"
   });
 }
-export function createTools() {
+const stepSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer", minimum: 1, maximum: 8 },
+    action: { type: "string" },
+    tool: { type: "string", description: "预计使用的工具名" }
+  },
+  required: ["id", "action"],
+  additionalProperties: false
+};
+// 计划步骤统一以 pending 初始化；提交与修订共用同一形状。
+function planWithStatuses(steps) {
+  return steps.map(s => ({ id: s.id, action: s.action, tool: s.tool, status: "pending" }));
+}
+export function createTools(planning = null) {
   return [
     {
       name: "list_datasets", label: "发现数据集",
@@ -79,6 +93,70 @@ export function createTools() {
           unit: data.unit, source: data.source, caveat: data.caveat };
         if (params.chartType) return textResult(text, { chart: { ...data, chartType: params.chartType } });
         return textResult(text);
+      }
+    },
+    {
+      name: "submit_plan", label: "提交调查计划",
+      description: "提交本次调查的需求分析与步骤清单；提交后才能使用数据工具。每个新问题都必须先提交计划。",
+      parameters: {
+        type: "object",
+        properties: {
+          requirement: {
+            type: "object",
+            properties: {
+              goal: { type: "string", description: "一句话调查目标" },
+              dataset: { type: "string", description: "数据集 ID，未确定填 unknown" },
+              metric: { type: "string", description: "指标键，未确定填 unknown" },
+              timeRange: { type: "string", description: "时间范围及口径说明" },
+              caveats: { type: "array", items: { type: "string" }, description: "口径注意事项，如缺失年份、统计口径变化" }
+            },
+            required: ["goal"], additionalProperties: false
+          },
+          steps: { type: "array", minItems: 1, maxItems: 8, items: stepSchema }
+        },
+        required: ["requirement", "steps"], additionalProperties: false
+      },
+      execute: async (_id, params) => {
+        const plan = { requirement: params.requirement, steps: planWithStatuses(params.steps) };
+        if (planning) { planning.submitted = true; planning.plan = plan; }
+        return textResult(plan, { plan });
+      }
+    },
+    {
+      name: "update_plan", label: "更新调查计划",
+      description: "更新计划步骤状态（pending/in_progress/completed）；情况变化时提供 revisedSteps 整体修订计划。",
+      parameters: {
+        type: "object",
+        properties: {
+          updates: {
+            type: "array", minItems: 1,
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "integer", minimum: 1, maximum: 8 },
+                status: { type: "string", enum: ["pending", "in_progress", "completed"] }
+              },
+              required: ["id", "status"], additionalProperties: false
+            }
+          },
+          revisedSteps: { type: "array", minItems: 1, maxItems: 8, items: stepSchema, description: "整体修订时提供，替换现有步骤" }
+        },
+        required: ["updates"], additionalProperties: false
+      },
+      execute: async (_id, params) => {
+        if (!planning?.plan) return textResult({ error: "尚未提交计划；请先调用 submit_plan。" });
+        // 整体修订时替换全部步骤并重置为 pending，本次 updates 不再应用。
+        if (params.revisedSteps) {
+          planning.plan = { ...planning.plan, steps: planWithStatuses(params.revisedSteps) };
+          return textResult(planning.plan, { plan: planning.plan });
+        }
+        const known = new Set(planning.plan.steps.map(s => s.id));
+        for (const u of params.updates) {
+          if (!known.has(u.id)) continue;
+          const step = planning.plan.steps.find(s => s.id === u.id);
+          step.status = u.status;
+        }
+        return textResult(planning.plan, { plan: planning.plan });
       }
     }
   ];
