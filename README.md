@@ -19,6 +19,14 @@
 
 ### 真实 Pi Agent 与离线兜底
 
+编辑 .env，使用 MiniMax（国内直连，Anthropic 兼容协议）：
+
+    PI_PROVIDER=minimax-cn
+    PI_MODEL=MiniMax-M2.7
+    MINIMAX_CN_API_KEY=your-api-key
+
+也支持 OpenAI / Anthropic（见 .env.example 注释）。重启服务器即可。**真实模式**使用 @earendil-works/pi-agent-core 的 Agent Loop 和 Tool Calling。
+
 编辑 .env，使用 OpenAI（默认模型仅为示例，可按 pi-ai 模型目录修改）：
 
     PI_PROVIDER=openai
@@ -31,8 +39,6 @@
     PI_MODEL=claude-sonnet-4-6
     ANTHROPIC_API_KEY=your-api-key
 
-重启服务器即可。**真实模式**使用 @earendil-works/pi-agent-core 的 Agent Loop 和 Tool Calling。
-
 未配置 Key 时界面标记 **离线脚本演示（非 LLM）**。这时按照固定规则运行 SQLite 工具，能演示 UI 和计算，**不能证明模型的自主决策**。建议讲课前预先在有网环境测试模型可用性。
 
 ### 课堂演示问题
@@ -42,6 +48,8 @@
 3. 2016年的 PM2.5 数据在哪里？能否判断改善原因？
 4. 南京2022至2024年轨道交通客运量有什么变化？
 5. 南京普通高校在校学生人数从2000年到2024年有什么变化？
+6. 南京哪年夏天最热？请做夏季（6—8月）对比。
+7. 2026年10月南京逐日降水如何？画一张图。
 
 ## 数据与来源
 
@@ -87,7 +95,7 @@ PPT 第6—10页提供5组可展开、可复制的完整开发提示词，依次
               ▼
       SQLite (node:sqlite)
 
-工具：list_datasets / inspect_dataset / analyze_data / create_chart。服务端严格限定数据集与字段名，不接受任意SQL、Shell或Python；计算由SQLite完成，图表由Web SVG绘制。
+工具：list_datasets / inspect_dataset / analyze_data / create_chart / query_weather / submit_plan / update_plan。服务端严格限定数据集与字段名，不接受任意SQL、Shell或Python；计算由SQLite完成，图表由Web SVG绘制。**先规划再执行**：每个新问题必须先调用 submit_plan 提交需求分析与步骤清单（beforeToolCall 钩子硬约束），执行中用 update_plan 更新步骤状态，右侧面板实时显示计划卡片。
 
 主要文件：
 
