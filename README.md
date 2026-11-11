@@ -13,7 +13,7 @@
     npm start
 
 打开：
-- http://localhost:3000/slides — Web PPT：10页构建路线与5组现场开发提示词，支持复制、左右键、全屏与讲者备注（N）
+- http://localhost:3000/slides — Web PPT：11页构建路线与5组现场开发提示词，支持复制、左右键、全屏与讲者备注（N）
 - http://localhost:3000/agent — 对话、工具时间线、数据表和趋势图
 - http://localhost:3000/api/status — 运行模式
 
@@ -32,6 +32,28 @@
     ANTHROPIC_API_KEY=your-api-key
 
 重启服务器即可。**真实模式**使用 @earendil-works/pi-agent-core 的 Agent Loop 和 Tool Calling。
+
+### 使用国内模型或自建 OpenAI 兼容接口
+
+在根目录 `.env` 中配置第三方 Provider，而不是把密钥写到前端：
+
+```env
+PI_PROVIDER=custom
+PI_BASE_URL=https://api.deepseek.com
+PI_API_KEY=你的API密钥
+PI_MODEL=deepseek-chat
+# 可选：按照服务商实际限制设置
+PI_CONTEXT_WINDOW=128000
+PI_MAX_TOKENS=8192
+```
+
+`PI_BASE_URL` 是兼容接口的 API **根地址**（不要加 `/chat/completions`），`PI_MODEL` 必须使用服务商支持的真实 ID。切换到其他供应商时，替换上述三个值即可。当前 custom Provider 使用 **OpenAI Chat Completions** 协议，因此服务商必须支持流式响应和 Tool Calling；只有 Responses 协议或其他私有协议的服务商需要单独适配。模型的实际上下文大小与输出限制应以服务商为准。
+
+**配置入口与安全：**本项目从服务端的 `.env` 加载凭证，Web Agent 暂不支持在浏览器里填写 API Key 和 Base URL。这是刻意的——Demo 没有用户认证，如果开放服务端保存密钥的匿名设置接口会泄露或滥用凭证。启动后在 `/api/status` 中会显示当前 Provider、Model 与 live/offline 状态，但不会返回 API Key。修改 `.env` 后需要重启。
+
+如果使用的是 **Pi Coding Agent 终端工具**（而不是本项目 Web Agent），也可以通过 `~/.pi/agent/models.json` 配置 `baseUrl`、`api`、`apiKey` 和 `models`；这属于另一个独立的配置入口。详见 [Pi 官方模型配置](https://pi.dev/docs/latest/models-configuration)。
+
+
 
 未配置 Key 时界面标记 **离线脚本演示（非 LLM）**。这时按照固定规则运行 SQLite 工具，能演示 UI 和计算，**不能证明模型的自主决策**。建议讲课前预先在有网环境测试模型可用性。
 
