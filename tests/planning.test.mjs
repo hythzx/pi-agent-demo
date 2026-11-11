@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTools } from "../server/tools.mjs";
+import { createDataAgent, planFirstHook } from "../server/agent.mjs";
 
 const PLAN = {
   requirement: { goal: "分析南京PM2.5变化", dataset: "air_quality", metric: "pm25", timeRange: "2015-2024", caveats: ["2016年在该表中没有公布"] },
@@ -46,4 +47,22 @@ test("createTools 无参时规划工具不落状态", async () => {
   const submit = tools.find(t=>t.name==="submit_plan");
   const r = await submit.execute("t", PLAN);
   assert.ok(r.details.plan.steps.length === 2);
+});
+test("planFirstHook 拦截未提交时的数据工具", async () => {
+  const planning = { submitted: false, plan: null };
+  const hook = planFirstHook(planning);
+  const blocked = await hook({ toolCall: { name: "analyze_data" } });
+  assert.equal(blocked.block, true);
+  assert.match(blocked.reason, /submit_plan/);
+  assert.equal(await hook({ toolCall: { name: "submit_plan" } }), undefined);
+  assert.equal(await hook({ toolCall: { name: "update_plan" } }), undefined);
+});
+test("planFirstHook 在提交后放行", async () => {
+  const hook = planFirstHook({ submitted: true, plan: { steps: [] } });
+  assert.equal(await hook({ toolCall: { name: "analyze_data" } }), undefined);
+});
+test("createDataAgent 返回 agent 与 planning", () => {
+  const created = createDataAgent("test-session-0001");
+  assert.equal(typeof created.agent.prompt, "function");
+  assert.deepEqual(created.planning, { submitted: false, plan: null });
 });
