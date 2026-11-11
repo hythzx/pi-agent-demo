@@ -1,4 +1,4 @@
-import { CATALOG, listDatasets, describeDataset, series } from "./db.mjs";
+import { CATALOG, listDatasets, describeDataset, series, weatherQuery } from "./db.mjs";
 
 const textResult = (data, extra = {}) => ({
   content: [{ type: "text", text: JSON.stringify(data) }],
@@ -52,6 +52,33 @@ export function createTools() {
         const data = compute(params);
         const chart = { ...data, chartType: params.chartType || "line" };
         return textResult({ chartCreated: true, metric: data.metricTitle, count: data.points.length, source: data.source, caveat: data.caveat }, { chart });
+      }
+    },
+    {
+      name: "query_weather", label: "查询历史天气",
+      description: "查询本地 SQLite 的南京 ERA5 历史天气：daily 逐日原始记录（单次不超过400天）、monthly 按月聚合、yearly 按年聚合；monthly/yearly 可用 months 做季节过滤（如[6,7,8]查夏季）。需要让用户看到天气图表时提供 chartType。",
+      parameters: {
+        type: "object",
+        properties: {
+          mode: { type: "string", enum: ["daily", "monthly", "yearly"], description: "daily逐日记录/monthly按月聚合/yearly按年聚合" },
+          metric: { type: "string", enum: Object.keys(CATALOG.weather_daily.metrics), description: "天气指标键" },
+          startDate: { type: "string", description: "daily 必填，YYYY-MM-DD" },
+          endDate: { type: "string", description: "daily 必填，YYYY-MM-DD" },
+          startYear: years.startYear,
+          endYear: years.endYear,
+          months: { type: "array", items: { type: "integer", minimum: 1, maximum: 12 }, maxItems: 12, uniqueItems: true, description: "季节过滤月份，仅 monthly/yearly 有效" },
+          aggregation: years.aggregation,
+          chartType: { type: "string", enum: ["line", "bar"], description: "提供时随结果返回可渲染图表" }
+        },
+        required: ["mode", "metric"], additionalProperties: false
+      },
+      execute: async (_id, params) => {
+        const data = weatherQuery(params);
+        const text = { mode: data.mode, metric: data.metricTitle, count: data.summary.count,
+          first: data.summary.first, last: data.summary.last, change: data.summary.change,
+          unit: data.unit, source: data.source, caveat: data.caveat };
+        if (params.chartType) return textResult(text, { chart: { ...data, chartType: params.chartType } });
+        return textResult(text);
       }
     }
   ];
