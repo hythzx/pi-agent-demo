@@ -59,7 +59,7 @@
 
     npm run import:weather
 
-联网请求 Open-Meteo Historical Weather API，以南京 **32.0603°N,118.7969°E** 为查询坐标，使用**ERA5** 再分析网格历史数据，默认2015-01-01至2024-12-31；将日平均/最高/最低温度及降水量导入 SQLite 的 weather_daily 表。没有实际导入就不会声称天气数据存在。
+联网请求 Open-Meteo Historical Weather API，以南京 **32.0603°N,118.7969°E** 为查询坐标，使用**ERA5** 再分析网格历史数据，默认2015-01-01至当天（ERA5 有数天发布延迟，脚本会自动剪掉末尾尚未发布的空占位行）；将日平均/最高/最低温度及降水量导入 SQLite 的 weather_daily 表。没有实际导入就不会声称天气数据存在。
 
 这是**网格气象再分析估计，不是南京单一气象站实测**。数据署名：[Weather data by Open-Meteo.com](https://open-meteo.com/)（CC BY 4.0，注明再分析模型/修改方式）。公共 API 免费访问条件适用于非商业场景。导入可以用 WEATHER_START、WEATHER_END 改日期。
 

@@ -83,7 +83,7 @@ export const CATALOG = Object.freeze({
     }
   },
   weather_daily: {
-    title: "南京 · 历史天气（可选导入）", description: "Open-Meteo ERA5 再分析网格数据，默认2015—2024",
+    title: "南京 · 历史天气（可选导入）", description: "Open-Meteo ERA5 再分析网格数据，默认2015—至今",
     table: "weather_daily", dateColumn: "day",
     source: "https://open-meteo.com/en/docs/historical-weather-api",
     caveat: "非南京气象站实测记录，是附近网格的气象再分析估计。运行 npm run import:weather 后可用，需注明 Open-Meteo CC BY 4.0 署名。",
@@ -114,7 +114,7 @@ export function describeDataset(id) {
   const preview = db.prepare("SELECT * FROM " + item.table + " ORDER BY " + item.dateColumn + " DESC LIMIT 5").all();
   return { id, ...item, count, range, preview };
 }
-export function series({ dataset, metric, startYear = 1949, endYear = 2025, groupBy = "year", aggregation = "avg" }) {
+export function series({ dataset, metric, startYear = 1949, endYear = new Date().getFullYear(), groupBy = "year", aggregation = "avg" }) {
   const meta = getDataset(dataset);
   if (!Object.hasOwn(meta.metrics, metric)) throw new Error("指标不在白名单内：" + String(metric));
   if (!["avg", "sum", "max", "min"].includes(aggregation)) throw new Error("不支持的聚合方式");

@@ -8,7 +8,7 @@ const datasetParam = { type: "string", enum: Object.keys(CATALOG), description: 
 const metricParam = { type: "string", description: "仅可使用 inspect_dataset 返回的 metrics 中列出的指标键" };
 const years = {
   startYear: { type: "integer", minimum: 1900, maximum: 2100, description: "起始年份，默认1949" },
-  endYear: { type: "integer", minimum: 1900, maximum: 2100, description: "结束年份，默认2025" },
+  endYear: { type: "integer", minimum: 1900, maximum: 2100, description: "结束年份，默认当前年份" },
   groupBy: { type: "string", enum: ["year", "month"], description: "默认year；仅天气日度数据支持month" },
   aggregation: { type: "string", enum: ["avg", "sum", "max", "min"], description: "默认avg；降水量按年或月累计时用sum" }
 };
@@ -16,7 +16,7 @@ const analyzeProperties = { dataset: datasetParam, metric: metricParam, ...years
 function compute(params) {
   return series({
     dataset: params.dataset, metric: params.metric,
-    startYear: params.startYear ?? 1949, endYear: params.endYear ?? 2025,
+    startYear: params.startYear ?? 1949, endYear: params.endYear ?? new Date().getFullYear(),
     groupBy: params.groupBy ?? "year", aggregation: params.aggregation ?? "avg"
   });
 }
