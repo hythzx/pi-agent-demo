@@ -1,5 +1,6 @@
 import { Agent } from "@earendil-works/pi-agent-core";
-import { createModels } from "@earendil-works/pi-ai";
+import { createModels, createProvider, envApiKeyAuth } from "@earendil-works/pi-ai";
+import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import { anthropicProvider } from "@earendil-works/pi-ai/providers/anthropic";
 import { config } from "./config.mjs";
@@ -16,20 +17,68 @@ const SYSTEM_PROMPT = [
   "不要执行任意SQL、Shell、Python，也不能声称访问了互联网以外的新数据。"
 ].join("\n");
 
+function createCustomModelProvider() {
+  let endpoint;
+  try {
+    endpoint = new URL(config.baseUrl);
+  } catch {
+    throw new Error("PI_BASE_URL 必须是完整的 HTTP(S) URL");
+  }
+  if (!["http:", "https:"].includes(endpoint.protocol) || endpoint.username || endpoint.password ||
+      endpoint.search || endpoint.hash) {
+    throw new Error("PI_BASE_URL 只能使用 http(s) 地址，不允许 URL 内嵌密钥、查询或片段");
+  }
+  if (!config.model.trim()) throw new Error("请设置 PI_MODEL 为服务商实际支持的模型 ID");
+  if (!Number.isFinite(config.contextWindow) || !Number.isFinite(config.maxTokens) ||
+      config.maxTokens < 1 || config.contextWindow <= config.maxTokens) {
+    throw new Error("PI_CONTEXT_WINDOW 必须大于 PI_MAX_TOKENS 且均为正数");
+  }
+
+  // Pi model descriptors carry the actual API protocol and endpoint. An
+  // arbitrary third-party model is not necessarily in Pi's built-in catalog.
+  const model = {
+    id: config.model,
+    name: config.model,
+    provider: "custom",
+    api: "openai-completions",
+    baseUrl: endpoint.toString().replace(/\/$/, ""),
+    reasoning: false,
+    input: ["text"],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: config.contextWindow,
+    maxTokens: config.maxTokens
+  };
+  return createProvider({
+    id: "custom",
+    name: "Custom OpenAI-compatible API",
+    baseUrl: model.baseUrl,
+    auth: { apiKey: envApiKeyAuth("Custom model API key", ["PI_API_KEY"]) },
+    models: [model],
+    api: openAICompletionsApi()
+  });
+}
+
 export function createDataAgent(sessionId) {
   const models = createModels();
-  if (config.provider === "anthropic") models.setProvider(anthropicProvider());
-  else models.setProvider(openaiProvider());
+  if (config.provider === "custom") {
+    models.setProvider(createCustomModelProvider());
+  } else if (config.provider === "anthropic") {
+    models.setProvider(anthropicProvider());
+  } else if (config.provider === "openai") {
+    models.setProvider(openaiProvider());
+  } else {
+    throw new Error("不支持的 PI_PROVIDER：" + config.provider + "（可用：openai、anthropic、custom）");
+  }
+
   const model = models.getModel(config.provider, config.model);
   if (!model) {
-    throw new Error("模型不在当前 Pi 模型目录中：" + config.provider + "/" + config.model + "；请检查 PI_MODEL。");
+    throw new Error("模型不可用：" + config.provider + "/" + config.model + "；请检查 PI_MODEL。");
   }
-  const agent = new Agent({
+  return new Agent({
     sessionId,
     initialState: { systemPrompt: SYSTEM_PROMPT, model, tools: createTools(), thinkingLevel: "off" },
     streamFn: models.streamSimple.bind(models),
     toolExecution: "sequential",
     identity: { attribution: { name: "Nanjing Data Lab", url: "https://github.com/hythzx/pi-agent-demo" } }
   });
-  return agent;
 }
