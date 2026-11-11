@@ -1,6 +1,6 @@
 # Pi Agent Demo · Nanjing Data Lab
 
-一套可运行的 Pi Agent 实战项目：**10页 Web PPT（内置逐步可复制的开发提示词）+ 南京 SQLite 数据 + Pi Agent Core + 实时工具追踪 + Web 图表**。
+一套可运行的 Pi Agent 实战项目：**11页 Web PPT（内置逐步可复制的开发提示词）+ 南京 SQLite 数据 + Pi Agent Core + 实时工具追踪 + Web 图表**。
 
 ## 快速开始
 
@@ -69,7 +69,7 @@
 
 先启动 PPT，再在仓库根目录运行 Pi Coding Agent（未安装时可使用 `npm install -g @earendil-works/pi-coding-agent` 安装）。
 
-PPT 第5—9页提供5组可展开、可复制的完整开发提示词，依次完成：SQLite 数据验证 → 自定义 Tools 与真实 Agent → SSE 服务 → Web UI → 验收。
+PPT 第6—10页提供5组可展开、可复制的完整开发提示词，依次完成：SQLite 数据验证 → 自定义 Tools 与真实 Agent → SSE 服务 → Web UI → 验收。
 
 现场生成代码放在独立的 `workshop/`，服务端口 `3001`，不会覆盖已有的 `/agent` 成品。操作细节见 [docs/teaching-guide.md](docs/teaching-guide.md)。
 
