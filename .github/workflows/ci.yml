@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Test SQLite and tools
+        run: npm test
+      - name: HTTP smoke test
+        shell: bash
+        run: |
+          node server/main.mjs > /tmp/pi-agent-demo.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in {1..25}; do
+            if curl -fsS http://localhost:3000/api/status > /tmp/status.json; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:3000/api/datasets | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const d=JSON.parse(s);if(d.length<3||!d.some(x=>x.id==="education"&&x.count===34))process.exit(1)})'
+          curl -fsS http://localhost:3000/slides | grep -q '从 LLM 到'
+          curl -fsS http://localhost:3000/agent | grep -q '向南京这座城市'
+          curl -fsSN -H 'content-type: application/json' -d '{"message":"南京的PM2.5有什么变化？"}' http://localhost:3000/api/chat | grep -q '"type":"done"'
