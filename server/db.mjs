@@ -143,6 +143,55 @@ export function series({ dataset, metric, startYear = 1949, endYear = new Date()
       changePct: first.value === 0 ? null : +((last.value - first.value) / Math.abs(first.value) * 100).toFixed(2) }
   };
 }
+// 天气专用查询：daily 逐日原始记录（≤400 天）、monthly 按月聚合、yearly 按年聚合。
+// months 仅用于 monthly/yearly：yearly 限定聚合窗口（季节过滤），monthly 筛选保留的月份。
+export function weatherQuery({ mode, metric, startDate, endDate, startYear = 1949, endYear = new Date().getFullYear(), months, aggregation }) {
+  if (!Object.hasOwn(CATALOG.weather_daily.metrics, metric)) throw new Error("指标不在白名单内：" + String(metric));
+  if (!["daily", "monthly", "yearly"].includes(mode)) throw new Error("模式无效：" + String(mode));
+  if (months !== undefined && mode === "daily") throw new Error("daily 模式不支持 months 过滤");
+  const agg = (aggregation ?? (metric === "precipitation_mm" ? "sum" : "avg")).toUpperCase();
+  if (!["AVG", "SUM", "MAX", "MIN"].includes(agg)) throw new Error("不支持的聚合方式");
+  let where = "WHERE " + metric + " IS NOT NULL";
+  const params = [];
+  if (mode === "daily") {
+    const dateRe = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const start = dateRe.exec(String(startDate || "")), end = dateRe.exec(String(endDate || ""));
+    if (!start || !end) throw new Error("daily 模式需要 YYYY-MM-DD 格式的 startDate/endDate");
+    const span = (Date.UTC(+end[1], +end[2] - 1, +end[3]) - Date.UTC(+start[1], +start[2] - 1, +start[3])) / 86400000;
+    if (span < 0) throw new Error("日期范围无效：startDate 晚于 endDate");
+    if (span > 400) throw new Error("日期区间超过 400 天；请改用 monthly 或 yearly 聚合");
+    where += " AND day BETWEEN ? AND ?";
+    params.push(startDate, endDate);
+  } else {
+    if (!Number.isInteger(startYear) || !Number.isInteger(endYear) || startYear > endYear || startYear < 1900 || endYear > 2100) throw new Error("年份范围无效");
+    where += " AND year BETWEEN ? AND ?";
+    params.push(startYear, endYear);
+    if (months !== undefined) {
+      if (!Array.isArray(months) || months.length === 0 || months.some(m => !Number.isInteger(m) || m < 1 || m > 12)) throw new Error("months 必须为 1—12 的整数数组");
+      where += " AND month IN (" + months.map(() => "?").join(",") + ")";
+      params.push(...months);
+    }
+  }
+  const expr = mode === "daily" ? "day" : mode === "monthly" ? "substr(day, 1, 7)" : "year";
+  const points = db.prepare("SELECT " + expr + " AS period, ROUND(" + agg + "(" + metric + "), 2) AS value, COUNT(" + metric + ") AS samples FROM weather_daily " + where + " GROUP BY " + expr + " ORDER BY " + expr).all(...params);
+  if (points.length === 0) throw new Error("该时间范围内没有天气记录；可能尚未运行 npm run import:weather");
+  const values = points.map(p => p.value).filter(Number.isFinite);
+  const total = values.reduce((sum, v) => sum + v, 0);
+  const lowest = points.reduce((a, b) => a.value <= b.value ? a : b);
+  const highest = points.reduce((a, b) => a.value >= b.value ? a : b);
+  const first = points[0], last = points[points.length - 1];
+  return {
+    dataset: "weather_daily", datasetTitle: CATALOG.weather_daily.title, mode, metric,
+    metricTitle: CATALOG.weather_daily.metrics[metric].label,
+    unit: CATALOG.weather_daily.metrics[metric].unit,
+    aggregation: agg.toLowerCase(),
+    source: CATALOG.weather_daily.source,
+    caveat: CATALOG.weather_daily.caveat + " 涉及 2026 年时注意：该年度数据不完整（ERA5 有发布延迟），不能与完整年度直接比较。",
+    points, summary: { count: points.length, meanOfGroups: +(total / values.length).toFixed(2),
+      lowest, highest, first, last, change: +(last.value - first.value).toFixed(2),
+      changePct: first.value === 0 ? null : +((last.value - first.value) / Math.abs(first.value) * 100).toFixed(2) }
+  };
+}
 export function saveMessage(sessionId, role, content) {
   db.prepare("INSERT INTO conversations(session_id, role, content) VALUES(?,?,?)").run(sessionId, role, content.slice(0,20000));
 }
