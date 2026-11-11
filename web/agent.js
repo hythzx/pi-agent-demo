@@ -78,6 +78,25 @@
     el("artifacts").prepend(chartNode(chart));
     state.charts++;el("chartCount").textContent=state.charts+" 个图表";
   }
+  const statusIcon={pending:"○",in_progress:"●",completed:"✓"};
+  function renderPlan(plan) {
+    const host=el("planHost");host.replaceChildren();
+    const card=document.createElement("article");card.className="plan-card";
+    const title=document.createElement("h3");title.textContent="调查计划";
+    const goal=document.createElement("p");goal.className="plan-goal";goal.textContent=plan.requirement?.goal||"";
+    card.append(title,goal);
+    const req=plan.requirement||{};
+    const meta=document.createElement("div");meta.className="plan-meta";
+    [["数据集",req.dataset],["指标",req.metric],["范围",req.timeRange]].forEach(([k,v])=>{if(!v)return;const s=document.createElement("span");s.textContent=k+"："+v;meta.append(s);});
+    if(meta.childNodes.length)card.append(meta);
+    const caveats=req.caveats||[];
+    if(caveats.length){const ul=document.createElement("ul");ul.className="plan-caveats";caveats.forEach(c=>{const li=document.createElement("li");li.textContent=c;ul.append(li);});card.append(ul);}
+    const list=document.createElement("ol");list.className="plan-steps";
+    (plan.steps||[]).forEach(step=>{const li=document.createElement("li");li.className="plan-step "+(step.status||"pending");
+      const icon=document.createElement("span");icon.className="plan-status";icon.textContent=statusIcon[step.status]||"○";
+      li.append(icon,document.createTextNode(" "+step.action));list.append(li);});
+    card.append(list);host.append(card);
+  }
   const currentSteps=new Map();
   function stepStart(event) {
     if(state.tools===0)el("timeline").replaceChildren();
@@ -152,6 +171,7 @@
           if(event.type==="tool_start")stepStart(event);
           if(event.type==="tool_end")stepEnd(event);
           if(event.type==="chart")addChart(event.chart);
+          if(event.type==="plan")renderPlan(event.plan);
           if(event.type==="error"){notify(event.message);response.textContent+="\n[运行中断] "+event.message;}
         }
       }
@@ -163,6 +183,8 @@
   el("suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data-q]");if(btn)sendMessage(btn.dataset.q);});
   el("reset").addEventListener("click",()=>{if(state.busy)return;state.sessionId=newId();sessionStorage.setItem("nanjing-session",state.sessionId);state.charts=0;state.tools=0;currentSteps.clear();
     el("messages").replaceChildren();bubble("assistant","新会话已开始。请选择一个南京数据主题。");el("timeline").textContent="工具调用尚未开始。";el("artifacts").replaceChildren();
+    el("planHost").replaceChildren();
+    const empty=document.createElement("p");empty.className="small muted";empty.textContent="尚无调查计划；提问后 Agent 会先提交计划。";el("planHost").append(empty);
     const placeholder=document.createElement("div");placeholder.className="empty-chart";placeholder.textContent="等待下一次数据调查";el("artifacts").append(placeholder);
     el("chartCount").textContent="0 个图表";el("toolCount").textContent="(0)";notify("");});
   loadStatus();loadDatasets();
