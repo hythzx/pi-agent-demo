@@ -141,10 +141,14 @@ Tool results → next turn</pre>
   <div class="two">
     <div class="mini-terminal"><div class="mini-title"><span class="dot"></span>终端 · 仓库根目录</div><pre>npm install
 cp .env.example .env
-# 填写模型 API Key
+# .env 配置国内模型：
+# PI_PROVIDER=custom
+# PI_BASE_URL=兼容接口根地址
+# PI_API_KEY=你的密钥
+# PI_MODEL=实际模型 ID
 npm start
 
-# 另开终端运行 Pi Coding Agent
+# 另开终端
 pi</pre></div>
     <div>
       <div class="card"><span class="eyeline">BASELINE</span><strong>已有南京 SQLite 数据</strong><p>现场不下载数据、不搭构建工具。</p></div>
