@@ -100,11 +100,13 @@ dialog::backdrop{background:#020914cc}
       <strong>把循环交给运行时执行</strong>
       <div class="mini-terminal" style="margin:19px 0">
         <div class="mini-title"><span class="dot"></span>实际的工具调用</div>
-        <pre>LLM → text / tool_calls
-           ↓
-Runtime → execute tools
-           ↓
-Tool results → next turn</pre>
+        <pre>┌─→ LLM：text / tool_calls
+│         ↓
+│    Runtime：execute tools
+│         ↓
+└── tool results → next turn
+
+没有 tool_calls？→ 结束，输出答案</pre>
       </div>
       <p>模型请求、工具执行、上下文与事件全部由 Pi 管理，UI 随时订阅。</p>
     </div>
