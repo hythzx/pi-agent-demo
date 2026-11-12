@@ -91,26 +91,13 @@ dialog::backdrop{background:#020914cc}
     <div class="card"><span class="eyeline">OUTPUT</span><strong>图表与结论</strong><p>数字有来源、可核对。</p></div>
   </div>
 </section>
-<section class="slide" data-title="ReAct 与 Pi" data-note="讲解时不把两者说成竞争替代：ReAct 是推理与行动交替的范式；Pi 是管理模型请求、Tool Call、结果、下一 Turn 和事件的具体运行时。原始 ReAct 示例常展示 Thought，但 Pi 不要求暴露模型隐藏推理。重点看下一页，如何把运行循环接到自己的 Web UI。">
-  <div class="kicker">REACT → AGENT LOOP</div>
-  <h2>ReAct 与 Pi：<span class="accent">区别在哪里？</span></h2>
+<section class="slide" data-title="Pi 原理与生态" data-note="讲原理时对照左侧循环图：模型以文本或工具调用返回，运行时执行工具、结果回给模型进入下一轮，全程事件可订阅——这也是后面 SSE 能做实时界面的原因。生态四个包各一句话，重点让学生分清：pi-agent-core 是今天构建目标的运行时，pi-coding-agent 是现场生成代码的工具，两者是两回事。">
+  <div class="kicker">THE PI RUNTIME</div>
+  <h2>Pi：<span class="accent">原理与生态</span></h2>
   <div class="two" style="align-items:stretch">
     <div class="card">
-      <span class="eyeline">REACT / 范式</span>
-      <strong>推理与行动交替</strong>
-      <div class="mini-terminal" style="margin:19px 0">
-        <div class="mini-title"><span class="dot"></span>循环的思路</div>
-        <pre>Thought
-   ↓
-Action  →  Observation
-   ↑           │
-   └───────────┘</pre>
-      </div>
-      <p>描述模型如何借助环境反馈，继续解决问题。</p>
-    </div>
-    <div class="card">
-      <span class="eyeline">PI AGENT LOOP / 运行时</span>
-      <strong>把循环交给程序执行</strong>
+      <span class="eyeline">原理 / AGENT LOOP</span>
+      <strong>把循环交给运行时执行</strong>
       <div class="mini-terminal" style="margin:19px 0">
         <div class="mini-title"><span class="dot"></span>实际的工具调用</div>
         <pre>LLM → text / tool_calls
@@ -119,11 +106,19 @@ Runtime → execute tools
            ↓
 Tool results → next turn</pre>
       </div>
-      <p>管理请求、工具结果、上下文与运行事件。</p>
+      <p>模型请求、工具执行、上下文与事件全部由 Pi 管理，UI 随时订阅。</p>
+    </div>
+    <div class="card">
+      <span class="eyeline">生态 / 四个包</span>
+      <strong>构建目标与构建工具</strong>
+      <p style="margin:15px 0 0"><b>pi-agent-core</b> — Agent 运行时：循环、工具、事件、状态（今天构建的目标）</p>
+      <p style="margin:11px 0 0"><b>pi-ai</b> — 模型接入：统一接口与多家 provider 目录</p>
+      <p style="margin:11px 0 0"><b>pi-schema</b> — 工具参数的 JSON Schema 校验</p>
+      <p style="margin:11px 0 0"><b>pi-coding-agent</b> — 现场编码助手 CLI（今天生成代码的工具）</p>
     </div>
   </div>
-  <p class="lead" style="margin-top:26px">不是替代 ReAct，<span class="accent">而是让这种循环成为可集成的运行能力。</span></p>
-  <div class="subtle">参考：<a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct 论文 ↗</a>　·　<a href="https://pi.dev/docs/latest/how-pi-works" target="_blank" rel="noopener">Pi 官方 Agent Loop ↗</a></div>
+  <p class="lead" style="margin-top:26px">同一个体系：<span class="accent">用 pi-coding-agent 生成代码，用 pi-agent-core 运行我们做出来的 Agent。</span></p>
+  <div class="subtle">参考：<a href="https://pi.dev/docs/latest/how-pi-works" target="_blank" rel="noopener">Pi 官方 How Pi Works ↗</a>　·　<a href="https://pi.dev/docs/latest/models-configuration" target="_blank" rel="noopener">模型配置 ↗</a></div>
 </section>
 <section class="slide" data-title="设计01 架构" data-note="动手前先定架构。这张图是后续六个模块的边界约定：浏览器只消费事件；Node 服务负责会话与桥接；Pi Agent Core 负责模型决策与循环；工具层受白名单约束；数据库只被工具访问。执行循环就标注在图上：模型选工具 → 执行 → 结果回模型 → 下一轮。">
   <div class="kicker">DESIGN 01 / ARCHITECTURE</div><h2>设计先行：<span class="accent">系统架构</span></h2>

@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | 0—2 分钟 | 1 | 展示目标 |
 | 2—4 分钟 | 2 | 看最终成品（指出计划卡片与打勾） |
-| 4—7 分钟 | 3 | 对照经典 ReAct 与 Pi Agent Loop |
+| 4—7 分钟 | 3 | 讲 Pi 原理（Agent Loop）与生态（四个包） |
 | 7—9 分钟 | 4 | 设计 01：架构总览与执行循环 |
 | 9—11 分钟 | 5 | 设计 02：功能拆分（六模块 ↔ 六步骤） |
 | 11—13 分钟 | 6 | 设计 03：工具契约，重点讲规划工具 |
@@ -42,14 +42,13 @@
 - **工具契约（第 6 页）：**查询工具 = 名称 + 描述 + JSON Schema + 白名单；规划工具 = submit_plan / update_plan + beforeToolCall 钩子 + 每问重置。强调：规划是结构约束，不是提示词里的"请先计划"。
 - **数据设计（第 7 页）：**四张表全部真实来源；口径差异（2016 缺失、交通仅三年、2026 不完整年度）是后面验收的核对点。
 
-### ReAct 与 Pi：讲解时只说两句话
+### Pi 的原理与生态：讲解要点
 
-- **ReAct 是范式：**模型交替生成推理与行动，并利用环境观察继续完成任务。经典写法是 Thought → Action → Observation。
-- **Pi Agent Loop 是实现：**模型以文本和结构化 Tool Calls 返回，运行时执行工具、记录结果，再决定是否进入下一 Turn，并持续发出事件供 UI 订阅。
+- **原理（对照左图循环）：**模型以文本或结构化 Tool Calls 返回；运行时执行工具、结果回给模型进入下一 Turn；全程事件可订阅——这也是后面 SSE 能做实时界面的原因。
+- **生态（四个包各一句话）：**pi-agent-core 是 Agent 运行时（循环、工具、事件、状态，今天构建的目标）；pi-ai 是模型接入层（统一接口与多家 provider 目录）；pi-schema 负责工具参数的 JSON Schema 校验；pi-coding-agent 是现场编码助手 CLI。
+- **最易混淆的一点：**构建目标用 pi-agent-core，构建工具是 pi-coding-agent——今天同一课堂上两者都会出现，务必让学生分清。
 
-**不要误导：**不是所有传统 Agent 都是 ReAct，也不是 Pi 取代 ReAct；ReAct 并不必然只能靠解析文本实现，Pi 也不要求向用户展示模型隐藏的推理过程。对比的重点是**抽象的行为范式**与**具体可集成的运行时机制**。
-
-参考：[ReAct 论文](https://arxiv.org/abs/2210.03629) · [Pi 官方 How Pi Works](https://pi.dev/docs/latest/how-pi-works)。
+参考：[Pi 官方 How Pi Works](https://pi.dev/docs/latest/how-pi-works) · [模型配置](https://pi.dev/docs/latest/models-configuration)。
 
 ## 课前准备
 
