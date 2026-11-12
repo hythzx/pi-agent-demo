@@ -38,7 +38,7 @@
 
 ## 课前准备
 
-运行环境：Node.js 24+、可调用的模型 API Key、Pi Coding Agent。安装 Pi Coding Agent（如果尚未安装）：
+运行环境：Node.js 24+、可调用的模型 API Key、Pi Coding Agent。国内模型和自建兼容端点可以配置根目录 .env 的 PI_PROVIDER=custom、PI_BASE_URL、PI_API_KEY、PI_MODEL。注意这里是 Web Agent 服务端配置；Pi Coding Agent 自身的自定义模型另行配置 ~/.pi/agent/models.json。安装 Pi Coding Agent（如果尚未安装）：
 
     npm install -g @earendil-works/pi-coding-agent
 
