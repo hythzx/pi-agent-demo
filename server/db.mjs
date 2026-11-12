@@ -156,7 +156,7 @@ export function weatherQuery({ mode, metric, startDate, endDate, startYear = 194
   if (mode === "daily") {
     const dateRe = /^(\d{4})-(\d{2})-(\d{2})$/;
     const start = dateRe.exec(String(startDate || "")), end = dateRe.exec(String(endDate || ""));
-    if (!start || !end) throw new Error("daily 模式需要 YYYY-MM-DD 格式的 startDate/endDate");
+    if (!start || !end) throw new Error("daily 模式需要 YYYY-MM-DD 格式的 startDate/endDate；若无具体日期，请改用 yearly 或 monthly 模式");
     const span = (Date.UTC(+end[1], +end[2] - 1, +end[3]) - Date.UTC(+start[1], +start[2] - 1, +start[3])) / 86400000;
     if (span < 0) throw new Error("日期范围无效：startDate 晚于 endDate");
     if (span > 400) throw new Error("日期区间超过 400 天；请改用 monthly 或 yearly 聚合");

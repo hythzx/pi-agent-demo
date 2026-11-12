@@ -95,7 +95,7 @@ PPT 第6—10页提供5组可展开、可复制的完整开发提示词，依次
               ▼
       SQLite (node:sqlite)
 
-工具：list_datasets / inspect_dataset / analyze_data / create_chart / query_weather / submit_plan / update_plan。服务端严格限定数据集与字段名，不接受任意SQL、Shell或Python；计算由SQLite完成，图表由Web SVG绘制。**先规划再执行**：每个新问题必须先调用 submit_plan 提交需求分析与步骤清单（beforeToolCall 钩子硬约束），执行中用 update_plan 更新步骤状态，右侧面板实时显示计划卡片。
+工具：list_datasets / inspect_dataset / analyze_data / create_chart / query_weather / submit_plan / update_plan。服务端严格限定数据集与字段名，不接受任意SQL、Shell或Python；计算由SQLite完成，图表由Web SVG绘制。**先规划再执行**：每个新问题必须先调用 submit_plan 提交需求分析与步骤清单（beforeToolCall 钩子硬约束），执行中用 update_plan 更新步骤状态，分析产物面板实时显示计划卡片。
 
 主要文件：
 

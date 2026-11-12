@@ -70,7 +70,7 @@ export function createTools(planning = null) {
     },
     {
       name: "query_weather", label: "查询历史天气",
-      description: "查询本地 SQLite 的南京 ERA5 历史天气：daily 逐日原始记录（单次不超过400天）、monthly 按月聚合、yearly 按年聚合；monthly/yearly 可用 months 做季节过滤（如[6,7,8]查夏季）。需要让用户看到天气图表时提供 chartType。",
+      description: "查询本地 SQLite 的南京 ERA5 历史天气：daily 逐日原始记录（单次不超过400天）、monthly 按月聚合、yearly 按年聚合；monthly/yearly 可用 months 做季节过滤（如[6,7,8]查夏季）。需要让用户看到天气图表时提供 chartType。daily 必须同时提供 startDate 与 endDate（YYYY-MM-DD）；用户未给具体日期时改用 yearly 或 monthly。",
       parameters: {
         type: "object",
         properties: {
