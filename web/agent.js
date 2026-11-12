@@ -8,9 +8,13 @@
   function bubble(role,text) {
     const node=document.createElement("div"); node.className="bubble "+role;
     const tag=document.createElement("span");tag.className="tag";tag.textContent=role==="user"?"YOUR QUESTION":"NANJING DATA AGENT";
-    const body=document.createElement("span");body.textContent=text||"";
+    const md=role==="assistant";
+    const body=document.createElement(md?"div":"span");if(md)body.className="md";
+    body.textContent=text||"";
     node.append(tag,body);el("messages").append(node);el("messages").scrollTop=el("messages").scrollHeight;return body;
   }
+  // 助手气泡渲染：marked 解析 + DOMPurify 消毒后 innerHTML；vendor 脚本缺失时退回纯文本。
+  function renderMd(node,text){if(window.marked&&window.DOMPurify)node.innerHTML=DOMPurify.sanitize(marked.parse(text,{breaks:true}));else node.textContent=text;}
   function svg(tag,attrs,text) {
     const node=document.createElementNS(ns,tag);
     Object.entries(attrs||{}).forEach(([k,v])=>node.setAttribute(k,String(v)));
@@ -152,7 +156,7 @@
     if(state.busy)return;
     const question=text.trim();if(!question)return;
     state.busy=true;el("sendBtn").disabled=true;el("messageInput").disabled=true;notify("");
-    bubble("user",question);const response=bubble("assistant","");
+    bubble("user",question);const response=bubble("assistant","");let raw="";
     try {
       const r=await fetch("/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({message:question,sessionId:state.sessionId})});
       if(!r.ok)throw new Error((await r.json()).error||"HTTP "+r.status);
@@ -167,16 +171,16 @@
           if(!line)continue;
           let event;try{event=JSON.parse(line.slice(6));}catch{continue;}
           if(event.type==="meta"){state.sessionId=event.sessionId;sessionStorage.setItem("nanjing-session",state.sessionId);}
-          if(event.type==="delta"){response.textContent+=event.text;el("messages").scrollTop=el("messages").scrollHeight;}
+          if(event.type==="delta"){raw+=event.text;renderMd(response,raw);el("messages").scrollTop=el("messages").scrollHeight;}
           if(event.type==="tool_start")stepStart(event);
           if(event.type==="tool_end")stepEnd(event);
           if(event.type==="chart")addChart(event.chart);
           if(event.type==="plan")renderPlan(event.plan);
-          if(event.type==="error"){notify(event.message);response.textContent+="\n[运行中断] "+event.message;}
+          if(event.type==="error"){notify(event.message);raw+="\n\n[运行中断] "+event.message;renderMd(response,raw);}
         }
       }
-      if(!response.textContent.trim())response.textContent="任务已结束，但没有收到可显示的文本。";
-    }catch(e){notify("请求失败："+e.message);response.textContent+="\n请求失败："+e.message;}
+      if(!raw.trim())renderMd(response,"任务已结束，但没有收到可显示的文本。");
+    }catch(e){notify("请求失败："+e.message);raw+="\n\n请求失败："+e.message;renderMd(response,raw);}
     finally{state.busy=false;el("sendBtn").disabled=false;el("messageInput").disabled=false;el("messageInput").focus();}
   }
   el("chatForm").addEventListener("submit",e=>{e.preventDefault();const q=el("messageInput").value;el("messageInput").value="";sendMessage(q);});

@@ -14,7 +14,9 @@ const allowed = {
   "/agent": "agent.html", "/agent.html": "agent.html",
   "/web/shared.css": "shared.css",
   "/web/slides.js": "slides.js",
-  "/web/agent.js": "agent.js"
+  "/web/agent.js": "agent.js",
+  "/web/vendor/marked.umd.js": "vendor/marked.umd.js",
+  "/web/vendor/purify.min.js": "vendor/purify.min.js"
 };
 const mime = { html:"text/html; charset=utf-8", css:"text/css; charset=utf-8", js:"text/javascript; charset=utf-8" };
 function json(res, data, status=200) {
