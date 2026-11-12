@@ -75,19 +75,19 @@ dialog::backdrop{background:#020914cc}
   <nav class="topnav"><a href="/slides" class="active">构建路线</a><a href="/agent">已有成品 ↗</a></nav>
 </header>
 <main id="stage" class="stage">
-<section class="slide active" data-title="开始" data-note="不要急着讲概念，先让大家看到终点：一个能回答南京数据问题、真正从 SQLite 计算并生成图表的 Web Agent。">
+<section class="slide active" data-title="开始" data-note="不要急着讲概念，先让大家看到终点：一个能回答南京数据问题、先规划再执行、真正从数据库计算并生成图表的 Web Agent。今天动手前先讲设计：架构、模块、工具契约与数据。">
   <div class="kicker">BUILD SOMETHING REAL / PI AGENT</div>
   <h1>从零做一个<br><span class="accent">会分析数据的 Agent</span></h1>
-  <p class="lead">Pi Agent Core × SQLite × Web UI</p>
+  <p class="lead">设计先行 · Pi Agent Core × 数据库 × Web UI</p>
   <div class="actionline"><a class="cta" href="/agent">先看最终成品 ↗</a><span class="subtle">接下来，按步骤把它做出来。</span></div>
 </section>
-<section class="slide" data-title="最终目标" data-note="一句话说清演示目标：能问、会查、能算、能画，还能看到工具执行过程。最终生成 workshop 应用，和现有成品相互独立。">
+<section class="slide" data-title="最终目标" data-note="一句话说清演示目标：能问、会查、能算、能画，先规划再执行，还能看到计划与工具执行过程。最终生成 workshop 应用，和现有成品相互独立。">
   <div class="kicker">THE GOAL</div>
   <h2>最终交付：<span class="accent">一个可交互的 Web Agent</span></h2>
   <p class="quote">“南京近十年的 PM2.5 改善了吗？<br>请用数据回答，并画一张图。”</p>
   <div class="card-row">
-    <div class="card"><span class="eyeline">INPUT</span><strong>自然语言提问</strong><p>不用学习 SQL。</p></div>
-    <div class="card"><span class="eyeline">PROCESS</span><strong>实时工具调用</strong><p>看得见 Agent 正在做什么。</p></div>
+    <div class="card"><span class="eyeline">INPUT</span><strong>自然语言提问</strong><p>不用学习查询语言。</p></div>
+    <div class="card"><span class="eyeline">PROCESS</span><strong>先规划，再执行</strong><p>调查计划可见，步骤实时打勾。</p></div>
     <div class="card"><span class="eyeline">OUTPUT</span><strong>图表与结论</strong><p>数字有来源、可核对。</p></div>
   </div>
 </section>
@@ -125,23 +125,62 @@ Tool results → next turn</pre>
   <p class="lead" style="margin-top:26px">不是替代 ReAct，<span class="accent">而是让这种循环成为可集成的运行能力。</span></p>
   <div class="subtle">参考：<a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct 论文 ↗</a>　·　<a href="https://pi.dev/docs/latest/how-pi-works" target="_blank" rel="noopener">Pi 官方 Agent Loop ↗</a></div>
 </section>
-<section class="slide" data-title="执行链" data-note="只讲这一条核心逻辑：模型决定是否调用工具，运行时执行，结果返回模型；Web UI 只消费事件和分析产物。">
-  <div class="kicker">THE RUNTIME</div><h2>先看清楚<span class="accent">执行链</span></h2>
+<section class="slide" data-title="设计01 架构" data-note="动手前先定架构。这张图是后续六个模块的边界约定：浏览器只消费事件；Node 服务负责会话与桥接；Pi Agent Core 负责模型决策与循环；工具层受白名单约束；数据库只被工具访问。执行循环就标注在图上：模型选工具 → 执行 → 结果回模型 → 下一轮。">
+  <div class="kicker">DESIGN 01 / ARCHITECTURE</div><h2>设计先行：<span class="accent">系统架构</span></h2>
   <div class="pipeline">
-    <div class="pipe">Web UI<small>提问 / 图表</small></div><span class="arrow">→</span>
+    <div class="pipe">浏览器<small>提问 / 计划卡 / 图表</small></div><span class="arrow">→</span>
+    <div class="pipe">SSE 事件流<small>实时推送</small></div><span class="arrow">→</span>
+    <div class="pipe">Node 服务<small>会话 / 桥接</small></div><span class="arrow">→</span>
     <div class="pipe">Pi Agent Core<small>模型决策 / Agent Loop</small></div><span class="arrow">↔</span>
-    <div class="pipe">Tools<small>受限统计</small></div><span class="arrow">↔</span>
-    <div class="pipe">SQLite<small>南京数据</small></div>
+    <div class="pipe">工具层<small>受限统计</small></div><span class="arrow">↔</span>
+    <div class="pipe">数据库<small>南京数据</small></div>
   </div>
-  <div class="signal"><span>message_update</span><span>tool_execution_start</span><span>tool_execution_end</span></div>
-  <p class="lead">模型选择动作；工具执行计算；事件驱动界面更新。</p>
+  <div class="signal"><span>模型选工具 → 执行 → 结果回模型</span><span>message_update</span><span>tool_execution_*</span><span>plan</span><span>chart</span></div>
+  <p class="lead">先定边界，再动手：每个模块一个提示词步骤，<span class="accent">生成的代码才不会耦成一团。</span></p>
+</section>
+<section class="slide" data-title="设计02 拆分" data-note="六个模块对应后面六个提示词步骤。讲每个模块的一句话职责，强调边界：数据库层不懂模型，工具层不懂 HTTP，UI 不伪造事件。系统演进能力（步骤 03）正是这种分层的收益：加能力只动两层。">
+  <div class="kicker">DESIGN 02 / MODULES</div><h2>功能拆分：<span class="accent">六个模块</span></h2>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">STEP 01</span><strong>数据库层</strong><p>表结构、真实种子数据、数据目录、白名单查询。</p></div>
+    <div class="card"><span class="eyeline">STEP 02</span><strong>工具层 + Agent 编排</strong><p>基础工具契约；模型接入；Agent Loop 与事件订阅。</p></div>
+    <div class="card"><span class="eyeline">STEP 03</span><strong>规划层 + 天气工具</strong><p>submit_plan / update_plan 与钩子硬约束；weatherQuery / query_weather。</p></div>
+  </div>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">STEP 04</span><strong>SSE 服务</strong><p>会话隔离；Agent 事件转 HTTP 流；每问重置计划。</p></div>
+    <div class="card"><span class="eyeline">STEP 05</span><strong>Web UI</strong><p>三栏布局；计划卡片；SVG 图表；Markdown 渲染。</p></div>
+    <div class="card"><span class="eyeline">STEP 06</span><strong>验收</strong><p>三个问题核对数字、计划、图表与工具记录一致。</p></div>
+  </div>
+</section>
+<section class="slide" data-title="设计03 工具契约" data-note="重点讲规划工具：规划不是提示词里的口号，而是结构约束——submit_plan 提交需求分析与步骤清单，beforeToolCall 钩子在计划未提交时拦截所有数据工具，拦截原因回给模型促其先规划；每个新问题重置，演示效果才稳定。查询类工具一律白名单校验，模型不写查询语句。">
+  <div class="kicker">DESIGN 03 / TOOL CONTRACT</div><h2>工具设计：<span class="accent">先规划，再执行</span></h2>
+  <div class="signal"><span>list_datasets</span><span>inspect_dataset</span><span>analyze_data</span><span>create_chart</span><span>query_weather</span></div>
+  <div class="two" style="align-items:stretch">
+    <div class="card"><span class="eyeline">查询工具契约</span><strong>名称 + 描述 + Schema + 白名单</strong><p>指标必须在数据目录内；聚合方式枚举；模型只选参数，不写查询语句。</p></div>
+    <div class="card"><span class="eyeline">规划工具 · 本系统特色</span><strong>submit_plan / update_plan</strong><p>先提交需求分析与步骤清单才能动数据工具；执行中实时打勾；每问重新规划。</p></div>
+  </div>
+  <p class="lead">规划是<span class="accent">结构约束</span>：钩子拦截 + 状态重置，而不是提示词里的“请先计划”。</p>
+</section>
+<section class="slide" data-title="设计04 数据" data-note="数据是真实的：统计年鉴三张表口径不同（2016 缺失、交通只有三年），天气是 ERA5 再分析估计、2026 不完整。白名单原则：模型永远不写查询语句。缺年份不插值、不当成 0。">
+  <div class="kicker">DESIGN 04 / DATA</div><h2>数据设计：<span class="accent">真实数据与白名单</span></h2>
+  <div class="two" style="align-items:stretch">
+    <div class="mini-terminal"><div class="mini-title"><span class="dot"></span>四张表 · 全部真实来源</div><pre>air_quality    9 行  2015—2024  统计年鉴 表16-6
+transit        3 行  2022—2024  统计年鉴 表8-8
+education     34 行  1949—2024  统计年鉴 表13-9
+weather_daily 逐日   2015—今    ERA5 再分析（可选导入）</pre></div>
+    <div>
+      <div class="card"><span class="eyeline">白名单原则</span><strong>模型选参数，不写查询</strong><p>指标必须在数据目录内；聚合方式枚举；缺失年份不插值、不当 0；口径说明随每次查询返回。</p></div>
+      <p class="subtle" style="margin-top:16px">口径提示进系统：2016 无记录 · 交通仅三年 · 2026 不完整年度。</p>
+    </div>
+  </div>
 </section>
 <section class="slide" data-title="准备环境" data-note="从仓库根目录启动 PPT，另开终端运行 Pi Coding Agent 作为生成代码的助手。现场开发只在 workshop/ 内进行，避免覆盖 /agent 的备用成品。">
   <div class="kicker">READY / 3 MIN</div><h2>先把起点<span class="accent">准备好</span></h2>
   <div class="two">
     <div class="mini-terminal"><div class="mini-title"><span class="dot"></span>终端 · 仓库根目录</div><pre>npm install
 cp .env.example .env
-# .env 配置国内模型：
+# .env 配置模型（默认 minimax-cn，国内直连）：
+# MINIMAX_CN_API_KEY=你的密钥
+# 也可用 custom 接入任意 OpenAI 兼容端点：
 # PI_PROVIDER=custom
 # PI_BASE_URL=兼容接口根地址
 # PI_API_KEY=你的密钥
@@ -151,26 +190,28 @@ npm start
 # 另开终端
 pi</pre></div>
     <div>
-      <div class="card"><span class="eyeline">BASELINE</span><strong>已有南京 SQLite 数据</strong><p>现场不下载数据、不搭构建工具。</p></div>
+      <div class="card"><span class="eyeline">BASELINE</span><strong>已有南京真实数据</strong><p>现场不下载数据、不搭构建工具。</p></div>
       <p class="subtle" style="margin-top:18px">生成代码放在 <b class="accent">workshop/</b><br>已有成品保留在 <b class="accent">/agent</b> 供对照与兜底。</p>
     </div>
   </div>
 </section>
-<section class="slide" data-title="01 数据" data-note="复制第1步提示词到 Pi Coding Agent。让它写一个小脚本读取现成 SQLite，再检查缺失年份和真实数值。停在输出正确时进入下一步。">
+<section class="slide" data-title="01 数据库层" data-note="复制第1步提示词。让 Pi Coding Agent 参考根目录 server/db.mjs，在 workshop/ 重建同构数据库模块：四张表、真实种子数据、数据目录、白名单查询，并写验证脚本核对真实数值。停在验证输出正确时进入下一步。">
   <div class="kicker">STEP 01 / 8 MIN</div>
   <div class="prompt-layout"><div>
-    <div class="step-label">01 — SQLITE</div><h2>先让<span class="accent">数据能回答问题</span></h2>
-    <p class="aim">读取南京数据。确认字段、年份、真实数值。</p>
+    <div class="step-label">01 — DATABASE</div><h2>先让<span class="accent">数据能回答问题</span></h2>
+    <p class="aim">参考成品重建数据库模块：真实种子、数据目录、白名单查询。</p>
     <div class="actionline"><button class="cta" data-prompt="data" type="button">查看 / 复制提示词 ↗</button></div>
-  </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>✓ 发现数据集
-✓ PM2.5：2015 → 2024
+  </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>node workshop/check-data.mjs
+
+✓ 四个数据集 · 46 行真实统计
+✓ PM2.5：2015=57 → 2024=28
 ✓ 2016 无记录，不补造</pre></div></div>
 </section>
-<section class="slide" data-title="02 Agent" data-note="复制第2步提示词。新建 workshop/tools.mjs、agent.mjs 和 cli.mjs。这里是重点：工具契约、模型选择、agent.prompt()、Agent Events。不要复制现成的 server/agent.mjs。">
-  <div class="kicker">STEP 02 / 12 MIN</div>
+<section class="slide" data-title="02 工具与Agent" data-note="复制第2步提示词。新建 workshop/tools.mjs、agent.mjs 和 cli.mjs：四个基础工具契约、真实模型接入、agent.prompt() 与事件订阅。先阅读现成实现作参考，但不要导入现成的 createDataAgent，让核心看得见。">
+  <div class="kicker">STEP 02 / 10 MIN</div>
   <div class="prompt-layout"><div>
-    <div class="step-label">02 — AGENT + TOOLS</div><h2>把查询能力<span class="accent">交给 Agent</span></h2>
-    <p class="aim">工具描述任务。模型选择工具。SQLite 返回结果。</p>
+    <div class="step-label">02 — TOOLS + AGENT</div><h2>把查询能力<span class="accent">交给 Agent</span></h2>
+    <p class="aim">工具描述任务。模型选择工具。数据库返回结果。</p>
     <div class="signal"><span>name</span><span>description</span><span>parameters</span><span>execute</span></div>
     <div class="actionline"><button class="cta" data-prompt="agent" type="button">查看 / 复制提示词 ↗</button></div>
   </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>node workshop/cli.mjs \
@@ -179,45 +220,58 @@ pi</pre></div>
 ✓ 模型主动调用工具
 ✓ 输出带来源的结论</pre></div></div>
 </section>
-<section class="slide" data-title="03 事件" data-note="复制第3步提示词。解释为什么我们不直接等最终答案，如何通过 HTTP SSE 把 text_delta、tool_start、tool_end、chart 传给浏览器。端口3001，与现有PPT的3000不冲突。">
-  <div class="kicker">STEP 03 / 9 MIN</div>
+<section class="slide" data-title="03 规划与天气" data-note="复制第3步提示词。本步演示如何给运行中的系统添加新能力：规划工具（submit_plan/update_plan）+ beforeToolCall 钩子硬约束 + 每问重置；weatherQuery 三种模式与 query_weather 季节过滤。这是本系统区别于普通聊天 Agent 的关键一步，也是设计篇“工具契约”的落地。">
+  <div class="kicker">STEP 03 / 14 MIN</div>
   <div class="prompt-layout"><div>
-    <div class="step-label">03 — EVENTS + SSE</div><h2>让执行过程<span class="accent">实时可见</span></h2>
-    <p class="aim">Agent Events → Server-Sent Events → 浏览器。</p>
-    <div class="signal"><span>text_delta</span><span>tool_start</span><span>tool_end</span><span>chart</span></div>
+    <div class="step-label">03 — PLAN + WEATHER</div><h2>系统演进：<span class="accent">先规划，再执行</span></h2>
+    <p class="aim">规划工具 + 钩子硬约束；天气查询支持季节过滤。</p>
+    <div class="signal"><span>submit_plan</span><span>update_plan</span><span>beforeToolCall</span><span>query_weather</span></div>
+    <div class="actionline"><button class="cta" data-prompt="evolve" type="button">查看 / 复制提示词 ↗</button></div>
+  </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>node workshop/cli.mjs "南京哪年夏天最热？"
+
+✓ 先提交调查计划
+✓ 未提交前数据工具被拦截
+✓ query_weather 用 months=[6,7,8]</pre></div></div>
+</section>
+<section class="slide" data-title="04 SSE 服务" data-note="复制第4步提示词。解释为什么我们不直接等最终答案：把 Agent 事件转成 SSE，新增 plan 事件（完整计划对象），每个新问题前重置 planning，会话按 sessionId 隔离。端口3001，与现有PPT的3000不冲突。">
+  <div class="kicker">STEP 04 / 8 MIN</div>
+  <div class="prompt-layout"><div>
+    <div class="step-label">04 — EVENTS + SSE</div><h2>让执行过程<span class="accent">实时可见</span></h2>
+    <p class="aim">Agent 事件 → SSE → 浏览器；计划与工具全程可观察。</p>
+    <div class="signal"><span>text_delta</span><span>plan</span><span>tool_start / tool_end</span><span>chart</span></div>
     <div class="actionline"><button class="cta" data-prompt="stream" type="button">查看 / 复制提示词 ↗</button></div>
   </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>node workshop/server.mjs
 
 ✓ localhost:3001
-✓ POST /api/chat
-✓ 流式事件到达</pre></div></div>
+✓ 事件序列含 plan
+✓ 流式事件到达浏览器</pre></div></div>
 </section>
-<section class="slide" data-title="04 Web UI" data-note="复制第4步提示词。目标不是豪华的前端，而是可解释、可交互：输入问题、事件轨迹、交互图表。确保前端使用后端实际推送的图表数据，不伪造。">
-  <div class="kicker">STEP 04 / 12 MIN</div>
+<section class="slide" data-title="05 Web UI" data-note="复制第5步提示词。目标不是豪华的前端，而是可解释、可交互：三栏布局、工具时间线、真实数据 SVG 图表，加上两个本系统特色——计划卡片（plan 事件原位重渲染、步骤打勾）与 Markdown 渲染（vendor 的 marked + DOMPurify，消毒后再 innerHTML）。">
+  <div class="kicker">STEP 05 / 10 MIN</div>
   <div class="prompt-layout"><div>
-    <div class="step-label">04 — WEB UI</div><h2>让 Agent 拥有<span class="accent">自己的界面</span></h2>
-    <p class="aim">对话、工具时间线、数据图表，同屏展示。</p>
+    <div class="step-label">05 — WEB UI</div><h2>让 Agent 拥有<span class="accent">自己的界面</span></h2>
+    <p class="aim">对话、计划卡片、工具时间线、图表，同屏展示。</p>
+    <div class="signal"><span>调查计划卡</span><span>工具时间线</span><span>SVG 图表</span><span>Markdown</span></div>
     <div class="actionline"><button class="cta" data-prompt="ui" type="button">查看 / 复制提示词 ↗</button></div>
-  </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>浏览器打开
-http://localhost:3001
+  </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>浏览器打开 http://localhost:3001
 
-✓ 自然语言对话
-✓ 工具调用轨迹
-✓ 真正查询后生成图表</pre></div></div>
+✓ 先出计划，步骤逐个打勾
+✓ 图表来自真实查询
+✓ 回答按标题/表格/列表渲染</pre></div></div>
 </section>
-<section class="slide" data-title="05 验收" data-note="最后一步重点是检查，而不是继续加功能：数据能否回溯？模型没生成图表时不能伪造。真实模式不能无声退回脚本模拟。">
-  <div class="kicker">STEP 05 / 4 MIN</div><h2>三轮提问，<span class="accent">现场验收</span></h2>
+<section class="slide" data-title="06 验收" data-note="最后一步重点是检查，而不是继续加功能：三个问题覆盖基础查询、季节过滤与逐日查询；计划打勾与工具记录一致；Markdown 渲染无原文泄漏；无 Key 必须明确报错，不能无声退回脚本模拟。">
+  <div class="kicker">STEP 06 / 5 MIN</div><h2>三轮提问，<span class="accent">现场验收</span></h2>
   <div class="demo-questions">
     <div><b>01</b>南京 2015—2024 年 PM2.5 变化了多少？画图。</div>
-    <div><b>02</b>优良天数比例呢？再换一个指标。</div>
-    <div><b>03</b>2016 年的数据在哪里？能说明改善原因吗？</div>
+    <div><b>02</b>南京哪年夏天最热？做夏季（6—8月）对比。</div>
+    <div><b>03</b>2026 年 10 月南京逐日降水如何？画一张图。</div>
   </div>
-  <div class="actionline"><button class="cta" data-prompt="verify" type="button">复制验收提示词 ↗</button><span class="subtle">答案、图表、工具执行记录必须一致。</span></div>
+  <div class="actionline"><button class="cta" data-prompt="verify" type="button">复制验收提示词 ↗</button><span class="subtle">答案、计划、图表、工具执行记录必须一致。</span></div>
 </section>
-<section class="slide" data-title="完成" data-note="收束成一句话：核心不是聊天框，而是模型能使用工具完成可核验的任务。现场生成的 Web Agent 在3001端口；预先准备的稳定版本在3000/agent。">
+<section class="slide" data-title="完成" data-note="收束成一句话：核心不是聊天框，而是先设计边界、再让模型在结构约束下使用工具完成可核验的任务。现场生成的 Web Agent 在3001端口；预先准备的稳定版本在3000/agent。">
   <div class="kicker">DONE</div>
-  <h1>现在，你做出了一个<br><span class="accent">能真正做事的 Agent。</span></h1>
-  <p class="lead">模型选择工具 · SQLite 负责计算 · Web UI 展示过程与结果</p>
+  <h1>现在，你做出了一个<br><span class="accent">先规划、能做事的 Agent。</span></h1>
+  <p class="lead">设计先行 · 模型选择工具 · 数据库负责计算 · Web UI 展示计划与结果</p>
   <div class="actionline"><a class="cta" href="http://localhost:3001" target="_blank" rel="noopener">打开现场完成版 ↗</a><a class="ghost" href="/agent">打开备用成品 ↗</a></div>
 </section>
 </main>
