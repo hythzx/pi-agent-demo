@@ -5,3 +5,7 @@ data/
 *.db-shm
 *.db-wal
 .DS_Store
+.superpowers/
+.playwright-mcp/
+.v2c/
+.video_agent/
