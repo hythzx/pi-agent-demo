@@ -33,6 +33,16 @@ h1,h2{letter-spacing:-.047em;line-height:1.17;max-width:1100px}
 .pipe{background:#152a40;border:1px solid #416076;color:#e7f5fb;border-radius:15px;padding:19px 22px;font-size:20px;font-weight:800}
 .pipe small{display:block;color:#96afc3;font-size:12px;font-weight:400;margin-top:10px}
 .arrow{color:#7cdbca;font-size:29px;font-weight:700}
+/* 双行卡片页（如组件拆解）的紧凑变体，保证内容不超出 650px 版心 */
+.compact{padding:clamp(24px,4vw,55px)}
+.compact .kicker{margin-bottom:14px}
+.compact h2{margin-bottom:18px}
+.compact h1{font-size:clamp(34px,4.8vw,64px);margin-bottom:20px}
+.compact .card-row{gap:12px;margin:12px 0}
+.compact .card{padding:17px 19px}
+.compact .card .eyeline{margin-bottom:10px}
+.compact .card strong{font-size:18px;margin-bottom:8px}
+.compact .card p{font-size:14px}
 .prompt-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.78fr);gap:38px;align-items:center}
 .step-label{font-size:15px;color:#7eaeaf;font-weight:750;margin-bottom:14px}
 .aim{color:#b5c9dc;font-size:clamp(17px,1.75vw,23px);line-height:1.65;max-width:760px}
@@ -75,23 +85,33 @@ dialog::backdrop{background:#020914cc}
   <nav class="topnav"><a href="/slides" class="active">构建路线</a><a href="/agent">已有成品 ↗</a></nav>
 </header>
 <main id="stage" class="stage">
-<section class="slide active" data-title="开始" data-note="不要急着讲概念，先让大家看到终点：一个能回答南京数据问题、先规划再执行、真正从数据库计算并生成图表的 Web Agent。今天动手前先讲设计：架构、模块、工具契约与数据。">
+<section class="slide active" data-title="开始" data-note="先展示最终成果，再引入概念：一个能回答南京数据问题、先规划再执行、真正从数据库计算并生成图表的 Web Agent。动手前先讲设计：架构、模块、工具契约与数据。">
   <div class="kicker">BUILD SOMETHING REAL / PI AGENT</div>
-  <h1>从零做一个<br><span class="accent">会分析数据的 Agent</span></h1>
+  <h1>从零构建一个<br><span class="accent">会分析数据的 Agent</span></h1>
   <p class="lead">设计先行 · Pi Agent Core × 数据库 × Web UI</p>
-  <div class="actionline"><a class="cta" href="/agent">先看最终成品 ↗</a><span class="subtle">接下来，按步骤把它做出来。</span></div>
+  <div class="actionline"><a class="cta" href="/agent">先看最终成品 ↗</a><span class="subtle">接下来，按步骤完成构建。</span></div>
 </section>
 <section class="slide" data-title="最终目标" data-note="一句话说清演示目标：能问、会查、能算、能画，先规划再执行，还能看到计划与工具执行过程。最终生成 workshop 应用，和现有成品相互独立。">
   <div class="kicker">THE GOAL</div>
   <h2>最终交付：<span class="accent">一个可交互的 Web Agent</span></h2>
   <p class="quote">“南京近十年的 PM2.5 改善了吗？<br>请用数据回答，并画一张图。”</p>
   <div class="card-row">
-    <div class="card"><span class="eyeline">INPUT</span><strong>自然语言提问</strong><p>不用学习查询语言。</p></div>
-    <div class="card"><span class="eyeline">PROCESS</span><strong>先规划，再执行</strong><p>调查计划可见，步骤实时打勾。</p></div>
+    <div class="card"><span class="eyeline">INPUT</span><strong>自然语言提问</strong><p>无需学习专用查询语言。</p></div>
+    <div class="card"><span class="eyeline">PROCESS</span><strong>先规划，再执行</strong><p>调查计划可见，执行状态实时更新。</p></div>
     <div class="card"><span class="eyeline">OUTPUT</span><strong>图表与结论</strong><p>数字有来源、可核对。</p></div>
   </div>
 </section>
-<section class="slide" data-title="Pi 原理与生态" data-note="讲原理时对照左侧循环图：模型以文本或工具调用返回，运行时执行工具、结果回给模型进入下一轮，全程事件可订阅——这也是后面 SSE 能做实时界面的原因。生态四个包各一句话，重点让学生分清：pi-agent-core 是今天构建目标的运行时，pi-coding-agent 是现场生成代码的工具，两者是两回事。">
+<section class="slide" data-title="智能体形态" data-note="此页帮助听众建立分类框架：三类智能体的差别在运行位置、数据边界与交互界面，而非模型能力。本地智能体是本次工作坊的构建工具（下一页的 pi 即其中之一）；在线多租户产品了解即可；构建目标是第三类——嵌入系统、仅经白名单工具访问系统数据的领域智能体，后面设计篇的白名单与工具契约正源于此。">
+  <div class="kicker">LANDSCAPE / AGENT FORMS</div>
+  <h2>当下的智能体：<span class="accent">三种表现形式</span></h2>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">FORM 01 / LOCAL</span><strong>本地智能体</strong><p>Claude Code、Codex、OpenCode、Pi Coding Agent、WorkBuddy：运行于开发者本机，直接读写文件、执行命令，以终端或 IDE 为交互界面。</p></div>
+    <div class="card"><span class="eyeline">FORM 02 / MULTI-TENANT</span><strong>在线多租户智能体</strong><p>Manus、DeerFlow 及同类产品：任务在云端沙箱执行，环境由平台托管，经浏览器访问，多用户共享基础设施。</p></div>
+    <div class="card"><span class="eyeline">FORM 03 / EMBEDDED</span><strong>嵌入系统的智能体</strong><p>内置于业务系统，通过受控工具访问系统数据为用户服务：权限受系统约束、数据不出域。今天构建的南京数据 Agent 属于这一类。</p></div>
+  </div>
+  <p class="lead">形态各异，内核相同：模型、工具与循环。本次工作坊：<span class="accent">用本地智能体生成代码，交付一个嵌入系统的领域智能体。</span></p>
+</section>
+<section class="slide" data-title="Pi 原理与生态" data-note="讲原理时对照左侧循环图：模型以文本或工具调用返回，运行时执行工具、结果回给模型进入下一轮，全程事件可订阅——这也是后面 SSE 能做实时界面的原因。生态四个包各一句话，重点让学生分清：pi-agent-core 是今天构建目标的运行时，pi-coding-agent 是现场生成代码的工具，两者角色不同，不可混淆。">
   <div class="kicker">THE PI RUNTIME</div>
   <h2>Pi：<span class="accent">原理与生态</span></h2>
   <div class="two" style="align-items:stretch">
@@ -128,23 +148,24 @@ dialog::backdrop{background:#020914cc}
       <p style="margin:11px 0 0"><b>pi-coding-agent</b> — 现场编码助手 CLI（今天生成代码的工具）</p>
     </div>
   </div>
-  <p class="lead" style="margin-top:26px">同一个体系：<span class="accent">用 pi-coding-agent 生成代码，用 pi-agent-core 运行我们做出来的 Agent。</span></p>
+  <p class="lead" style="margin-top:26px">同一个体系：<span class="accent">用 pi-coding-agent 生成代码，用 pi-agent-core 运行构建出的 Agent。</span></p>
   <div class="subtle">参考：<a href="https://pi.dev/docs/latest/how-pi-works" target="_blank" rel="noopener">Pi 官方 How Pi Works ↗</a>　·　<a href="https://pi.dev/docs/latest/models-configuration" target="_blank" rel="noopener">模型配置 ↗</a></div>
 </section>
-<section class="slide" data-title="设计01 架构" data-note="动手前先定架构。这张图是后续六个模块的边界约定：浏览器只消费事件；Node 服务负责会话与桥接；Pi Agent Core 负责模型决策与循环；工具层受白名单约束；数据库只被工具访问。执行循环就标注在图上：模型选工具 → 执行 → 结果回模型 → 下一轮。">
-  <div class="kicker">DESIGN 01 / ARCHITECTURE</div><h2>设计先行：<span class="accent">系统架构</span></h2>
-  <div class="pipeline">
-    <div class="pipe">浏览器<small>提问 / 计划卡 / 图表</small></div><span class="arrow">→</span>
-    <div class="pipe">SSE 事件流<small>实时推送</small></div><span class="arrow">→</span>
-    <div class="pipe">Node 服务<small>会话 / 桥接</small></div><span class="arrow">→</span>
-    <div class="pipe">Pi Agent Core<small>模型决策 / Agent Loop</small></div><span class="arrow">↔</span>
-    <div class="pipe">工具层<small>受限统计</small></div><span class="arrow">↔</span>
-    <div class="pipe">数据库<small>南京数据</small></div>
+<section class="slide compact" data-title="设计01 组件" data-note="本页把架构翻译成可带走的组件清单：LLM 负责决策；运行时负责循环与上下文；工具是执行动作的唯一出口；MCP 是工具接入的行业标准，本项目暂未引入，以代码内白名单工具实现同等约束；记忆区分会话内上下文与跨会话持久化，本项目只做会话级；SSE 将内部事件实时推送给浏览器。底部一句话落到工程：下一页的六个模块就是这六个组件的拆分。">
+  <div class="kicker">DESIGN 01 / ARCHITECTURE</div><h2>组件拆解：<span class="accent">智能体由什么构成</span></h2>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">LLM / 决策</span><strong>大模型</strong><p>理解问题、选择工具、综合结论。本项目：pi-ai 接入 minimax-cn / OpenAI 兼容端点。</p></div>
+    <div class="card"><span class="eyeline">RUNTIME / 调度</span><strong>Agent 运行时</strong><p>驱动「模型 ↔ 工具」循环，管理上下文与事件。本项目：pi-agent-core。</p></div>
+    <div class="card"><span class="eyeline">TOOLS / 执行</span><strong>工具</strong><p>执行动作的唯一出口：名称、描述、参数 Schema、白名单。本项目：analyze_data、create_chart、query_weather。</p></div>
   </div>
-  <div class="signal"><span>模型选工具 → 执行 → 结果回模型</span><span>message_update</span><span>tool_execution_*</span><span>plan</span><span>chart</span></div>
-  <p class="lead">先定边界，再动手：每个模块一个提示词步骤，<span class="accent">生成的代码才不会耦成一团。</span></p>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">MCP / 接入</span><strong>工具接入协议</strong><p>标准化连接外部工具与数据源的开放协议。本项目暂以代码内白名单工具实现同等约束。</p></div>
+    <div class="card"><span class="eyeline">MEMORY / 状态</span><strong>记忆</strong><p>短期为会话上下文，长期需持久化。本项目：sessionId 隔离会话与规划状态。</p></div>
+    <div class="card"><span class="eyeline">SSE / 外显</span><strong>实时事件流</strong><p>服务器向浏览器单向推送事件，执行过程可观察。本项目：text_delta / plan / tool_* / chart。</p></div>
+  </div>
+  <p class="lead">六个组件构成一份通用清单：<span class="accent">下一页的六个模块，就是它们在本项目中的工程拆分。</span></p>
 </section>
-<section class="slide" data-title="设计02 拆分" data-note="六个模块对应后面六个提示词步骤。讲每个模块的一句话职责，强调边界：数据库层不懂模型，工具层不懂 HTTP，UI 不伪造事件。系统演进能力（步骤 03）正是这种分层的收益：加能力只动两层。">
+<section class="slide" data-title="设计02 拆分" data-note="六个模块对应后面六个提示词步骤。讲每个模块的一句话职责，强调边界：数据库层不依赖模型，工具层不感知 HTTP，UI 不伪造事件。系统演进能力（步骤 03）正是这种分层的收益：加能力只动两层。">
   <div class="kicker">DESIGN 02 / MODULES</div><h2>功能拆分：<span class="accent">六个模块</span></h2>
   <div class="card-row">
     <div class="card"><span class="eyeline">STEP 01</span><strong>数据库层</strong><p>表结构、真实种子数据、数据目录、白名单查询。</p></div>
@@ -157,16 +178,16 @@ dialog::backdrop{background:#020914cc}
     <div class="card"><span class="eyeline">STEP 06</span><strong>验收</strong><p>三个问题核对数字、计划、图表与工具记录一致。</p></div>
   </div>
 </section>
-<section class="slide" data-title="设计03 工具契约" data-note="重点讲规划工具：规划不是提示词里的口号，而是结构约束——submit_plan 提交需求分析与步骤清单，beforeToolCall 钩子在计划未提交时拦截所有数据工具，拦截原因回给模型促其先规划；每个新问题重置，演示效果才稳定。查询类工具一律白名单校验，模型不写查询语句。">
+<section class="slide" data-title="设计03 工具契约" data-note="重点讲规划工具：规划不是提示词中的软性建议，而是结构约束——submit_plan 提交需求分析与步骤清单，beforeToolCall 钩子在计划未提交时拦截所有数据工具，拦截原因回给模型促其先规划；每个新问题重置，演示行为才稳定可复现。查询类工具一律白名单校验，模型不写查询语句。">
   <div class="kicker">DESIGN 03 / TOOL CONTRACT</div><h2>工具设计：<span class="accent">先规划，再执行</span></h2>
   <div class="signal"><span>list_datasets</span><span>inspect_dataset</span><span>analyze_data</span><span>create_chart</span><span>query_weather</span></div>
   <div class="two" style="align-items:stretch">
     <div class="card"><span class="eyeline">查询工具契约</span><strong>名称 + 描述 + Schema + 白名单</strong><p>指标必须在数据目录内；聚合方式枚举；模型只选参数，不写查询语句。</p></div>
-    <div class="card"><span class="eyeline">规划工具 · 本系统特色</span><strong>submit_plan / update_plan</strong><p>先提交需求分析与步骤清单才能动数据工具；执行中实时打勾；每问重新规划。</p></div>
+    <div class="card"><span class="eyeline">规划工具 · 本系统特色</span><strong>submit_plan / update_plan</strong><p>先提交需求分析与步骤清单，方可调用数据工具；执行状态实时更新；每个问题重新规划。</p></div>
   </div>
   <p class="lead">规划是<span class="accent">结构约束</span>：钩子拦截 + 状态重置，而不是提示词里的“请先计划”。</p>
 </section>
-<section class="slide" data-title="设计04 数据" data-note="数据是真实的：统计年鉴三张表口径不同（2016 缺失、交通只有三年），天气是 ERA5 再分析估计、2026 不完整。白名单原则：模型永远不写查询语句。缺年份不插值、不当成 0。">
+<section class="slide" data-title="设计04 数据" data-note="数据是真实的：统计年鉴三张表口径不同（2016 缺失、交通只有三年），天气是 ERA5 再分析估计、2026 不完整。白名单原则：模型永远不写查询语句。缺失年份不插值、不按 0 处理。">
   <div class="kicker">DESIGN 04 / DATA</div><h2>数据设计：<span class="accent">真实数据与白名单</span></h2>
   <div class="two" style="align-items:stretch">
     <div class="mini-terminal"><div class="mini-title"><span class="dot"></span>四张表 · 全部真实来源</div><pre>air_quality    9 行  2015—2024  统计年鉴 表16-6
@@ -174,13 +195,13 @@ transit        3 行  2022—2024  统计年鉴 表8-8
 education     34 行  1949—2024  统计年鉴 表13-9
 weather_daily 逐日   2015—今    ERA5 再分析（可选导入）</pre></div>
     <div>
-      <div class="card"><span class="eyeline">白名单原则</span><strong>模型选参数，不写查询</strong><p>指标必须在数据目录内；聚合方式枚举；缺失年份不插值、不当 0；口径说明随每次查询返回。</p></div>
-      <p class="subtle" style="margin-top:16px">口径提示进系统：2016 无记录 · 交通仅三年 · 2026 不完整年度。</p>
+      <div class="card"><span class="eyeline">白名单原则</span><strong>模型选参数，不写查询</strong><p>指标必须在数据目录内；聚合方式枚举；缺失年份不插值、不按 0 处理；口径说明随每次查询返回。</p></div>
+      <p class="subtle" style="margin-top:16px">数据口径注意事项已写入系统提示：2016 无记录 · 交通仅三年 · 2026 不完整年度。</p>
     </div>
   </div>
 </section>
 <section class="slide" data-title="准备环境" data-note="从仓库根目录启动 PPT，另开终端运行 Pi Coding Agent 作为生成代码的助手。现场开发只在 workshop/ 内进行，避免覆盖 /agent 的备用成品。">
-  <div class="kicker">READY / 3 MIN</div><h2>先把起点<span class="accent">准备好</span></h2>
+  <div class="kicker">READY / 3 MIN</div><h2>准备<span class="accent">构建环境</span></h2>
   <div class="two">
     <div class="mini-terminal"><div class="mini-title"><span class="dot"></span>终端 · 仓库根目录</div><pre>npm install
 cp .env.example .env
@@ -196,8 +217,8 @@ npm start
 # 另开终端
 pi</pre></div>
     <div>
-      <div class="card"><span class="eyeline">BASELINE</span><strong>已有南京真实数据</strong><p>现场不下载数据、不搭构建工具。</p></div>
-      <p class="subtle" style="margin-top:18px">生成代码放在 <b class="accent">workshop/</b><br>已有成品保留在 <b class="accent">/agent</b> 供对照与兜底。</p>
+      <div class="card"><span class="eyeline">BASELINE</span><strong>已有南京真实数据</strong><p>现场不下载数据、不配置构建工具。</p></div>
+      <p class="subtle" style="margin-top:18px">生成代码放在 <b class="accent">workshop/</b><br>已有成品保留在 <b class="accent">/agent</b>，供对照与备用。</p>
     </div>
   </div>
 </section>
@@ -211,7 +232,7 @@ pi</pre></div>
 
 ✓ 四个数据集 · 46 行真实统计
 ✓ PM2.5：2015=57 → 2024=28
-✓ 2016 无记录，不补造</pre></div></div>
+✓ 2016 无记录，如实标注</pre></div></div>
 </section>
 <section class="slide" data-title="02 工具与Agent" data-note="复制第2步提示词。新建 workshop/tools.mjs、agent.mjs 和 cli.mjs：四个基础工具契约、真实模型接入、agent.prompt() 与事件订阅。先阅读现成实现作参考，但不要导入现成的 createDataAgent，让核心看得见。">
   <div class="kicker">STEP 02 / 10 MIN</div>
@@ -252,20 +273,20 @@ pi</pre></div>
 ✓ 事件序列含 plan
 ✓ 流式事件到达浏览器</pre></div></div>
 </section>
-<section class="slide" data-title="05 Web UI" data-note="复制第5步提示词。目标不是豪华的前端，而是可解释、可交互：三栏布局、工具时间线、真实数据 SVG 图表，加上两个本系统特色——计划卡片（plan 事件原位重渲染、步骤打勾）与 Markdown 渲染（vendor 的 marked + DOMPurify，消毒后再 innerHTML）。">
+<section class="slide" data-title="05 Web UI" data-note="复制第5步提示词。目标不是复杂的前端效果，而是可解释、可交互：三栏布局、工具时间线、真实数据 SVG 图表，加上两个本系统特色——计划卡片（plan 事件原位重渲染、步骤状态更新）与 Markdown 渲染（vendor 的 marked + DOMPurify，消毒后再 innerHTML）。">
   <div class="kicker">STEP 05 / 10 MIN</div>
   <div class="prompt-layout"><div>
-    <div class="step-label">05 — WEB UI</div><h2>让 Agent 拥有<span class="accent">自己的界面</span></h2>
+    <div class="step-label">05 — WEB UI</div><h2>为 Agent 构建<span class="accent">交互界面</span></h2>
     <p class="aim">对话、计划卡片、工具时间线、图表，同屏展示。</p>
     <div class="signal"><span>调查计划卡</span><span>工具时间线</span><span>SVG 图表</span><span>Markdown</span></div>
     <div class="actionline"><button class="cta" data-prompt="ui" type="button">查看 / 复制提示词 ↗</button></div>
   </div><div class="mini-terminal"><div class="mini-title"><span class="dot"></span>完成标志</div><pre>浏览器打开 http://localhost:3001
 
-✓ 先出计划，步骤逐个打勾
+✓ 计划先行呈现，步骤状态实时更新
 ✓ 图表来自真实查询
 ✓ 回答按标题/表格/列表渲染</pre></div></div>
 </section>
-<section class="slide" data-title="06 验收" data-note="最后一步重点是检查，而不是继续加功能：三个问题覆盖基础查询、季节过滤与逐日查询；计划打勾与工具记录一致；Markdown 渲染无原文泄漏；无 Key 必须明确报错，不能无声退回脚本模拟。">
+<section class="slide" data-title="06 验收" data-note="最后一步重点是检查，而不是继续加功能：三个问题覆盖基础查询、季节过滤与逐日查询；计划状态与工具记录一致；Markdown 渲染无原文残留；未配置密钥时必须明确报错，不得静默回退到脚本模拟。">
   <div class="kicker">STEP 06 / 5 MIN</div><h2>三轮提问，<span class="accent">现场验收</span></h2>
   <div class="demo-questions">
     <div><b>01</b>南京 2015—2024 年 PM2.5 变化了多少？画图。</div>
@@ -274,11 +295,27 @@ pi</pre></div>
   </div>
   <div class="actionline"><button class="cta" data-prompt="verify" type="button">复制验收提示词 ↗</button><span class="subtle">答案、计划、图表、工具执行记录必须一致。</span></div>
 </section>
-<section class="slide" data-title="完成" data-note="收束成一句话：核心不是聊天框，而是先设计边界、再让模型在结构约束下使用工具完成可核验的任务。现场生成的 Web Agent 在3001端口；预先准备的稳定版本在3000/agent。">
+<section class="slide" data-title="完成" data-note="收束成一句话：核心不是对话界面，而是先设计边界、再让模型在结构约束下使用工具完成可核验的任务。现场生成的 Web Agent 在3001端口；预先准备的稳定版本在3000/agent。">
   <div class="kicker">DONE</div>
-  <h1>现在，你做出了一个<br><span class="accent">先规划、能做事的 Agent。</span></h1>
+  <h1>现在，构建已经完成：<br><span class="accent">一个先规划、再执行的 Agent。</span></h1>
   <p class="lead">设计先行 · 模型选择工具 · 数据库负责计算 · Web UI 展示计划与结果</p>
   <div class="actionline"><a class="cta" href="http://localhost:3001" target="_blank" rel="noopener">打开现场完成版 ↗</a><a class="ghost" href="/agent">打开备用成品 ↗</a></div>
+</section>
+<section class="slide compact" data-title="这就结束了吗" data-note="悬念收尾：先自问自答——今天完成的是原型，不是产品。六个方向各用一句话点名即可，切勿展开：长期记忆、MCP 接入、多智能体协作、评测与回归、安全边界、成本控制。点名后以最后一句话收束下课，把实现细节留给课后探索或下一次课程。">
+  <div class="kicker">BEYOND TODAY</div>
+  <h1>这就<span class="accent">结束了吗？</span></h1>
+  <p class="lead">今天交付的，是一个可运行的原型。一个成熟的智能体，还需要——</p>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">NEXT 01 / MEMORY</span><strong>长期记忆</strong><p>跨会话记住用户与结论、沉淀偏好。今天的记忆仅存在于会话内。</p></div>
+    <div class="card"><span class="eyeline">NEXT 02 / MCP</span><strong>生态接入</strong><p>以标准协议挂载外部工具与数据源，接入更大的工具生态。</p></div>
+    <div class="card"><span class="eyeline">NEXT 03 / AGENTS</span><strong>多智能体协作</strong><p>任务分解与编排，子智能体并行执行、各司其职。</p></div>
+  </div>
+  <div class="card-row">
+    <div class="card"><span class="eyeline">NEXT 04 / EVALS</span><strong>评测与回归</strong><p>建立测试集，量化回答准确率与工具调用成功率。</p></div>
+    <div class="card"><span class="eyeline">NEXT 05 / SAFETY</span><strong>安全边界</strong><p>细粒度权限、审计日志与敏感数据脱敏。</p></div>
+    <div class="card"><span class="eyeline">NEXT 06 / COST</span><strong>成本控制</strong><p>令牌预算、结果缓存、并发与限流。</p></div>
+  </div>
+  <p class="lead">受时间所限，以上不再展开——<span class="accent">原型已经证明可行，成熟留给下一次。</span></p>
 </section>
 </main>
 <div class="foot"><span><b id="page">01</b> / <span id="total">11</span>　<span id="section" class="muted">开始</span></span><div class="ctrl"><button id="notesBtn" type="button">备注 N</button><button id="fullBtn" type="button">全屏 F</button><button id="prev" type="button" aria-label="上一页">←</button><button id="next" type="button" aria-label="下一页">→</button></div></div>
